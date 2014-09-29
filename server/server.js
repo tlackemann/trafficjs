@@ -48,10 +48,7 @@
 	 * The application will be responsible for serving pending and active games
 	 * and letting the end-user join as an opponent or a spectator
 	 */
-	//app.use(express.static(__dirname + '/../client'));
-	app.get('/', function (req, res) {
-		res.sendFile(path.normalize(__dirname + '/../client/index.html'));
-	});
+	app.use(express.static(__dirname + '/../client'));
 
 	server = require('http').createServer(app).listen(port, function() {
 		console.log("Server is listening on port " + port);
