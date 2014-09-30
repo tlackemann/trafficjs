@@ -16,7 +16,11 @@ module.exports = function() {
 
 		this.init = function() {
 			io.on('connection', function(socket){
-			  console.log('a user connected');
+				console.log(socket.id + ' connected');
+			  
+				socket.on('disconnect', function() {
+					console.log(socket.id + ' disconnected');
+				});
 			});
 		};
 
