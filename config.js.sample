@@ -13,18 +13,8 @@ module.exports = {
    "log": true,
    "game": {
       // Game settings go here
-   }
-   "session": {
-      "redis": {
-         "host": "localhost",
-         "port": 6379,
-         "db": "traffic-dev",
-         "pass": "",
-         "secret": "change-this-secret",
-         "cookie": {  
-            "path": "/",
-            "maxAge": 3600000
-         }
-      }
+   },
+   "server": {
+      "port": 1234
    }
 }

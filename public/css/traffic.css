@@ -1,0 +1,38 @@
+/**
+ * Primary stylesheet for Traffic interface
+ *
+ * @package		Traffic
+ * @version		1.0.0
+ * @author		Thomas Lackemann <tommylackemann@gmail.com>
+ * @copyright	Copyright (c) 2014, Thomas Lackemann
+ */
+html, body {
+	background-color:#FFF;
+}
+#traffic-header {
+	text-align: center;
+}
+#traffic-header h1 {
+	color:#3F3842;
+}
+#traffic-header .subtitle {
+	color:#4E4652;
+}
+#traffic-footer {
+	text-align: center;
+	margin:20px 0;
+	font-size:0.86em;
+	line-height:1.3em;
+}
+#traffic-footer cite {
+	font-style: inherit;
+	color:#999;
+	display:block;
+}
+#traffic-footer a {
+	color:#3F3842;
+	text-decoration: none;
+}
+#traffic-footer a:hover {
+	color:#AE8984;
+}

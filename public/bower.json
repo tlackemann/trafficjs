@@ -1,0 +1,26 @@
+{
+  "name": "Traffic-Interface",
+  "version": "1.0.0",
+  "description": "User interface for Traffic",
+  "main": "client.js",
+  "moduleType": [
+    "amd"
+  ],
+  "authors": [
+    "Thomas Lackemann <tommylackemann@gmail.com>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "tests"
+  ],
+  "dependencies": {
+    "font-awesome": "latest",
+    "angularjs": "~1.2.26",
+    "foundation": "~5.4.5",
+    "bootstrap": "~3.2.0"
+  }
+}

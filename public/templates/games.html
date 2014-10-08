@@ -1,0 +1,14 @@
+<section id="traffic-game-list">
+	<div class="container">
+		<div class="well well-sm col-lg-3" ng-repeat="g in game.games">
+			<div class="well">
+				<!-- Screenshot of game? -->
+			</div>
+			<span class="player-text">{{g.player1}}</span>
+			<span class="vs-text">vs</span>
+			<span class="player-text">{{g.player2}}</span>
+
+			<div class="game-specs" traffic-specs></div>
+		</div>
+	</div>
+</section>

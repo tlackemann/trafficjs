@@ -1,5 +1,5 @@
 /**
- * Configuration file
+ * Configuration file for express server
  *
  * @package    Traffic
  * @version    1.0.0
@@ -16,16 +16,5 @@ module.exports = {
    },
    "server": {
       "port": 1234
-   },
-   "redis": {
-      "host": "localhost",
-      "port": 6379,
-      "db": "traffic-dev",
-      "pass": "",
-      "secret": "change-this-secret",
-      "cookie": {  
-         "path": "/",
-         "maxAge": 3600000
-      }
    }
 }

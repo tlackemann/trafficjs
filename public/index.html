@@ -1,0 +1,36 @@
+<!doctype>
+<html ng-app="traffic">
+<head>
+	<title>Traffic</title>
+	<link rel="stylesheet" href="/components/bootstrap/dist/css/bootstrap.css">
+	<link rel="stylesheet" href="/css/traffic.css">
+</head>
+<body>
+	
+	<div id="traffic-loading"></div>
+	<div id="traffic" ng-controller="GameController as game">
+		<!-- Header -->
+		<traffic-header></traffic-header>
+		<traffic-start-game></traffic-start-game>
+
+		<!-- List of games -->
+		<traffic-list></traffic-list>
+
+		<!-- Footer -->
+		<traffic-footer></traffic-footer>
+	</div>
+
+	<script src="/components/jquery/dist/jquery.min.js"></script>
+	<script src="/components/bootstrap/dist/js/bootstrap.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="/components/angularjs/angular.min.js"></script>
+	<script src="/js/template-directives.js"></script>
+	<script src="/js/attribute-directives.js"></script>
+	<script src="/js/traffic.js"></script>
+	
+	<script>
+		// Connect to socket.io
+		var socket = io();
+	</script>
+</body>
+</html>

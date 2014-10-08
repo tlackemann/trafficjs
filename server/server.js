@@ -15,7 +15,6 @@
     	logger = require('morgan'),
     	path = require('path'),
 		session = require('express-session'),
-		RedisStore = require('connect-redis')(session),
 		Traffic = require('./traffic'),
 		app = express(),
 		port = process.env.PORT || config.server.port || 9001,
@@ -31,24 +30,12 @@
 		app.use(logger("dev"));
 	}
 
-	// Configure and start the redis session (for persistent sessions)
-	app.use(session({
-		saveUninitialized: true,
-		resave: true,
-		store: new RedisStore({
-			host: (config.redis.host) ? config.redis.host : 'localhost',
-			port: (config.redis.port) ? config.redis.port : 6379,
-			pass: (config.redis.pass) ? config.redis.pass : ''
-		}),
-		secret: (config.redis.secret) ? config.redis.secret : ''
-	}));
-
 	/**
-	 * Serves the inital client application
+	 * Serves the public application
 	 * The application will be responsible for serving pending and active games
 	 * and letting the end-user join as an opponent or a spectator
 	 */
-	app.use(express.static(__dirname + '/../client'));
+	app.use(express.static(__dirname + '/../public'));
 
 	server = require('http').createServer(app).listen(port, function() {
 		console.log("Server is listening on port " + port);
