@@ -1,31 +1,7 @@
-# Traffic
+The MIT License
+===============
 
-A 2-player traffic-style puzzle game
-
-## Requirements
-
-* node.js
-
-## Installation
-
-```
-# Install dependencies
-npm install
-
-# Run the server
-npm start
-```
-
-## Instructions
-
-Move horizontal and vertical pieces around the parking lot in order to navigate your car to the exit. The first player to successfully exit the parking lot wins.
-
-## License
-
-```
-The MIT License (MIT)
-
-Copyright (c) 2014 Thomas Lackemann <tommylackemann@gmail.com>
+Copyright (c) 2015 Thomas Lackemann <tommylackemann@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -44,4 +20,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-```
