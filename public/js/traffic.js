@@ -17,10 +17,14 @@
 
 		$http.get('/games').success(function(data) {
 			Traffic.games = data;
-		})
+		});
 
 		this.startGame = function() {
 			console.log('start a game');
+		},
+
+		this.changeUrl = function(url) {
+			return $location.url([url]);
 		}
 
 	}]);
