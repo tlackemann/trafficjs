@@ -8,6 +8,8 @@
  */
 
 (function() {
+	"use strict";
+
 	var TrafficGame = null;
 	
 	var Config = {
@@ -59,7 +61,7 @@
 		/**
 		 * The size, in blocks, of the Entity (x, y)
 		 * @protected
-		 * @var {Array}
+		 * @var {Object}
 		 */
 		var blocks = function() {
 			var bitX = Config.bitsize,
@@ -92,6 +94,12 @@
 		this.y = 0,
 
 		/**
+		 * Entity selected
+		 * @var {Boolean}
+		 */
+		this.selected = false,
+
+		/**
 		 * Speed
 		 * @var {Number}
 		 */
@@ -116,6 +124,16 @@
 		},
 
 		/**
+		 * Adds an event to the Entity (well window, for now)
+		 * @param {String} eventName
+		 * @param {Function} eventMethod
+		 * @return {Entity}
+		 */
+		this.addEvent = function(eventName, eventMethod) {
+			addEventListener(eventName, eventMethod, false);
+		}
+
+		/**
 		 * Checks if the Entity is ready
 		 * @return {Boolean}
 		 */
@@ -131,6 +149,10 @@
 			return image;
 		},
 
+		/** 
+		 * Return the Entity size (in x or y)
+		 * @return {Number|Object}
+		 */
 		this.size = function(xy) {
 			if (xy) {
 				return blocks[xy];
@@ -226,6 +248,13 @@
 		var startTime = 0;
 
 		/**
+		 * Current selected Entity
+		 * @protected
+		 * @var {Entity|Boolean}
+		 */
+		var selectedEntity = false;
+
+		/**
 		 * Canvas element
 		 * @var {Object}
 		 */
@@ -278,20 +307,98 @@
 			}
 		};
 
+		 var _addEntities = function() {
+		 	// Background entity
+			self.addEntity('background', {
+				blocks: {x: 12, y: 12}
+			});
+			// Main player
+			self.addEntity('player', {
+				blocks: {x: 2, y: 1},
+				speed: 200
+			});
+			// Opponent
+			self.addEntity('opponent', {
+				blocks: {x: 2, y: 1},
+				speed: 200
+			});
+		 };
+
+		 var _configureEntities = function() {
+		 	var background = self.entity('background'),
+		 		player = self.entity('player'),
+		 		opponent = self.entity('opponent');
+
+			// Set the background images draw method
+			background
+				.onRender(function() {
+					if (background.isReady()) {
+						self.ctx.beginPath();
+						self.ctx.rect(background.x, background.y, background.size('x'), background.size('y'));
+						self.ctx.fillStyle = 'grey';
+						self.ctx.fill();
+					}
+				});
+
+			// Set the players images draw method
+			player
+				.onRender(function() {
+					if (player.isReady()) {
+						self.ctx.beginPath();
+						self.ctx.rect(player.x, player.y, player.size('x'), player.size('y'));
+						self.ctx.fillStyle = (player.selected) ? 'yellow' : 'red';
+						self.ctx.fill();
+					}
+				})
+				.addEvent('click', function(event) {
+					var minX = player.x,
+						minY = player.y,
+						maxX = player.size('x') + player.x,
+						maxY = player.size('y') + player.y;
+
+					// Check if we clicked this piece
+					if (event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
+						self.selectEntity(player);
+					}
+				});
+
+			// Set the opponent images draw method
+			opponent
+				.onRender(function() {
+					if (opponent.isReady()) {
+						self.ctx.beginPath();
+						self.ctx.rect(opponent.x, opponent.y, opponent.size('x'), opponent.size('y'));
+						self.ctx.fillStyle = (opponent.selected) ? 'yellow' : 'blue';
+						self.ctx.fill();
+					}
+				})
+				.addEvent('click', function(event) {
+					var minX = opponent.x,
+						minY = opponent.y,
+						maxX = opponent.size('x') + opponent.x,
+						maxY = opponent.size('y') + opponent.y;
+
+					// Check if we clicked this piece
+					if (event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
+						self.selectEntity(opponent);
+					}
+				});
+		};
+
 		/**
-		 * Sets and starts a new Entity
+		 * Adds and starts a new Entity
 		 * @param {String} name
 		 * @param {Object} options
 		 * @return {Entity}
 		 */
-		this.setEntity = function(name, options) {
+		this.addEntity = function(name, options) {
 			entities[name] = new Entity(options);
 			entities[name].start();
 			return entities[name];
 		},
 
 		/**
-		 * Returns an available Entity object
+		 * Get an available Entity object
 		 * @param {String} name
 		 * @return {Entity}
 		 * @throws {Exception}
@@ -305,56 +412,35 @@
 		},
 
 		/**
+		 * Select an entity
+		 * @param {Entity} entity
+		 * @return {Traffic}
+		 */
+		this.selectEntity = function(entity) {
+			var e;
+
+			// Set all other entities as unselected
+			for(e in entities) {
+				if (entities.hasOwnProperty(e)) {
+					entities[e].selected = false;
+				}
+			}
+
+			// Set the selected entity
+			entity.selected = true;
+			selectedEntity = entity;
+
+			return this;
+		},
+
+		/**
 		 * Load the entities and starts the game loop
 		 * @return void
 		 */
 		this.start = function() {
-			// Background image
-			this.setEntity('background', {
-				blocks: {x: 12, y: 12}
-			});
-			// Set the background images draw method
-			this.entity('background').onRender(function() {
-				var background = self.entity('background');
-				if (background.isReady()) {
-					self.ctx.beginPath();
-					self.ctx.rect(background.x, background.y, background.size('x'), background.size('y'));
-					self.ctx.fillStyle = 'grey';
-					self.ctx.fill();
-				}
-			});
-
-			// Hero image
-			this.setEntity('player', {
-				blocks: {x: 2, y: 1},
-				speed: 200
-			});
-			// Set the players images draw method
-			this.entity('player').onRender(function() {
-				var player = self.entity('player');
-				if (player.isReady()) {
-					self.ctx.beginPath();
-					self.ctx.rect(player.x, player.y, player.size('x'), player.size('y'));
-					self.ctx.fillStyle = 'red';
-					self.ctx.fill();
-				}
-			});
-
-			// Monster image
-			this.setEntity('opponent', {
-				blocks: {x: 2, y: 1},
-				speed: 200
-			});
-			// Set the opponent images draw method
-			this.entity('opponent').onRender(function() {
-				var opponent = self.entity('opponent');
-				if (opponent.isReady()) {
-					self.ctx.beginPath();
-					self.ctx.rect(opponent.x, opponent.y, opponent.size('x'), opponent.size('y'));
-					self.ctx.fillStyle = 'blue';
-					self.ctx.fill();
-				}
-			});
+			// Setup the entities
+			_addEntities();
+			_configureEntities();
 
 			// Add event listeners
 			addEventListener("keydown", function (e) {
@@ -373,12 +459,17 @@
 		 * @return void
 		 */
 		this.reset = function() {
-			this.entity('player').x = 0;
-			this.entity('player').y = 0;
+			var player = this.entity('player'),
+				opponent = this.entity('opponent');
 
-			// Throw the opponent somewhere on the screen randomly
-			this.entity('opponent').x = 200;
-			this.entity('opponent').y = 200;
+			// Set the first player to the selected entity
+			this.selectEntity(player);
+
+			// Render the opponent and player
+			player.x = 0;
+			player.y = 0;
+			opponent.x = 200;
+			opponent.y = 200;
 		},
 
 		/**
