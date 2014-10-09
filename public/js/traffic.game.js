@@ -9,6 +9,10 @@
 
 (function() {
 	var TrafficGame = null;
+	
+	var Config = {
+		bitsize: 48
+	};
 
 	/**
 	 * Entity object
@@ -50,6 +54,29 @@
 		 * @var {Function}
 		 */
 		var renderMethod = function() {};
+
+		/**
+		 * The size, in blocks, of the Entity (x, y)
+		 * @protected
+		 * @var {Array}
+		 */
+		var blocks = function() {
+			var bitX = Config.bitsize,
+				bitY = Config.bitsize,
+				option = options.blocks;
+
+			if (option && option.x) {
+				bitX = option.x * Config.bitsize;
+			}
+			if (option && option.y) {
+				bitY = option.y * Config.bitsize;
+			}
+
+			return {
+				x: bitX,
+				y: bitY
+			}
+		}();
 
 		/**
 		 * X position
@@ -103,6 +130,14 @@
 			return image;
 		},
 
+		this.size = function(xy) {
+			if (xy) {
+				return blocks[xy];
+			} else {
+				return blocks;
+			}
+		}
+
 		/**
 		 * Perform preload activity
 		 * @return {Entity}
@@ -111,9 +146,12 @@
 			// Set the image src if there is one
 			if (imageSrc) {
 				image.src = imageSrc;
-			}
-			// When the image is ready, we're ready
-			image.onload = function() {
+
+				// When the image is ready, we're ready
+				image.onload = function() {
+					ready = true;
+				}
+			} else {
 				ready = true;
 			}
 
@@ -191,16 +229,16 @@
 		 */
 		var _checkKeys = function(modifier) {
 			if (38 in keysDown) { // Player holding up
-				self.entity('hero').y -= self.entity('hero').speed * modifier;
+				self.entity('player').y -= self.entity('player').speed * modifier;
 			}
 			if (40 in keysDown) { // Player holding down
-				self.entity('hero').y += self.entity('hero').speed * modifier;
+				self.entity('player').y += self.entity('player').speed * modifier;
 			}
 			if (37 in keysDown) { // Player holding left
-				self.entity('hero').x -= self.entity('hero').speed * modifier;
+				self.entity('player').x -= self.entity('player').speed * modifier;
 			}
 			if (39 in keysDown) { // Player holding right
-				self.entity('hero').x += self.entity('hero').speed * modifier;
+				self.entity('player').x += self.entity('player').speed * modifier;
 			}
 		};
 
@@ -214,12 +252,12 @@
 		var _checkCollision = function(modifier) {
 			// Are they touching?
 			if (
-				self.entity('hero').x <= (self.entity('monster').x + 32)
-				&& self.entity('monster').x <= (self.entity('hero').x + 32)
-				&& self.entity('hero').y <= (self.entity('monster').y + 32)
-				&& self.entity('monster').y <= (self.entity('hero').y + 32)
+				self.entity('player').x <= (self.entity('opponent').x + 32)
+				&& self.entity('opponent').x <= (self.entity('player').x + 32)
+				&& self.entity('player').y <= (self.entity('opponent').y + 32)
+				&& self.entity('opponent').y <= (self.entity('player').y + 32)
 			) {
-				//++monstersCaught;
+				//++opponentsCaught;
 				self.reset();
 			}
 		};
@@ -257,38 +295,48 @@
 		this.start = function() {
 			// Background image
 			this.setEntity('background', {
-				imageSrc: 'images/background.png'
+				blocks: {x: 12, y: 12}
 			});
 			// Set the background images draw method
 			this.entity('background').onRender(function() {
 				var background = self.entity('background');
 				if (background.isReady()) {
-					self.ctx.drawImage(self.entity('background').getImage(), 0, 0);
+					self.ctx.beginPath();
+					self.ctx.rect(background.x, background.y, background.size('x'), background.size('y'));
+					self.ctx.fillStyle = 'grey';
+					self.ctx.fill();
 				}
 			});
 
 			// Hero image
-			this.setEntity('hero', {
-				imageSrc: 'images/hero.png',
-				speed: 256
+			this.setEntity('player', {
+				blocks: {x: 2, y: 1},
+				speed: 200
 			});
-			// Set the heros images draw method
-			this.entity('hero').onRender(function() {
-				var hero = self.entity('hero');
-				if (hero.isReady()) {
-					self.ctx.drawImage(hero.getImage(), hero.x, hero.y);
+			// Set the players images draw method
+			this.entity('player').onRender(function() {
+				var player = self.entity('player');
+				if (player.isReady()) {
+					self.ctx.beginPath();
+					self.ctx.rect(player.x, player.y, player.size('x'), player.size('y'));
+					self.ctx.fillStyle = 'red';
+					self.ctx.fill();
 				}
 			});
 
 			// Monster image
-			this.setEntity('monster', {
-				imageSrc: 'images/monster.png'
+			this.setEntity('opponent', {
+				blocks: {x: 2, y: 1},
+				speed: 200
 			});
-			// Set the monster images draw method
-			this.entity('monster').onRender(function() {
-				var monster = self.entity('monster');
-				if (monster.isReady()) {
-					self.ctx.drawImage(monster.getImage(), monster.x, monster.y);
+			// Set the opponent images draw method
+			this.entity('opponent').onRender(function() {
+				var opponent = self.entity('opponent');
+				if (opponent.isReady()) {
+					self.ctx.beginPath();
+					self.ctx.rect(opponent.x, opponent.y, opponent.size('x'), opponent.size('y'));
+					self.ctx.fillStyle = 'blue';
+					self.ctx.fill();
 				}
 			});
 
@@ -309,12 +357,12 @@
 		 * @return void
 		 */
 		this.reset = function() {
-			this.entity('hero').x = this.canvas.width / 2;
-			this.entity('hero').y = this.canvas.height / 2;
+			this.entity('player').x = 0;
+			this.entity('player').y = 0;
 
-			// Throw the monster somewhere on the screen randomly
-			this.entity('monster').x = 32 + (Math.random() * (this.canvas.width - 64));
-			this.entity('monster').y = 32 + (Math.random() * (this.canvas.height - 64));
+			// Throw the opponent somewhere on the screen randomly
+			this.entity('opponent').x = 200;
+			this.entity('opponent').y = 200;
 		},
 
 		/**
@@ -333,15 +381,15 @@
 		 */
 		this.render = function() {
 			this.entity('background').render();
-			this.entity('hero').render();
-			this.entity('monster').render();
+			this.entity('player').render();
+			this.entity('opponent').render();
 
 			// Score
 			this.ctx.fillStyle = "rgb(250, 250, 250)";
 			this.ctx.font = "24px Helvetica";
 			this.ctx.textAlign = "left";
 			this.ctx.textBaseline = "top";
-			//this.ctx.fillText("Goblins caught: " + monstersCaught, 32, 32);
+			//this.ctx.fillText("Goblins caught: " + opponentsCaught, 32, 32);
 		},
 
 		/**
