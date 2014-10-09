@@ -15,7 +15,8 @@
 	var Config = {
 		bitsize: 64,
 		gridsize: 7,
-		framerate: 32
+		framerate: 32,
+		defaultSpeed: 500
 	};
 
 	/**
@@ -140,7 +141,7 @@
 		 * Speed
 		 * @var {Number}
 		 */
-		this.speed = options.speed || Config.bitsize,
+		this.speed = options.speed || Config.defaultSpeed,
 
 		/**
 		 * Lock movement on the X|Y axis
@@ -167,13 +168,13 @@
 		},
 
 		this.checkCollision = function(checkEntity) {
-			if (this.x <= (checkEntity.x + 32)
-				&& checkEntity.x <= (this.x + 32)
-				&& this.y <= (checkEntity.y + 32)
-				&& checkEntity.y <= (this.y + 32))
-			{
-				console.log(this.name + " is colliding with " + checkEntity.name);
-			}
+			// if (this.x <= (checkEntity.x + checkEntity.size('x'))
+			// 	&& checkEntity.x <= (this.x + this.size('x'))
+			// 	&& this.y <= (checkEntity.y + checkEntity.size('y'))
+			// 	&& checkEntity.y <= (this.y + this.size('y')))
+			// {
+			// 	console.log(this.name + " is colliding with " + checkEntity.name);
+			// }
 		},
 
 		/**
@@ -190,29 +191,29 @@
 
 			if (this.selected) {
 				// Move along the X axis 
-				if (x < scheduledX) {
+				if (x + this.size('x') === scheduledX) {
+					this.x = scheduledX - this.size('x');
+					this.scheduledX = scheduledX - this.size('x');
+				} else if (x - this.size('x') === scheduledX) {
+					this.x = scheduledX + this.size('x');
+					this.scheduledX = scheduledX + this.size('x');
+				} else if (x < scheduledX) {
 					this.x += this.speed * modifier;
 				} else if (x > scheduledX) {
 					this.x -= this.speed * modifier;
 				}
 
-				// Snap into the grid
-				if (x + this.size('x') === scheduledX) {
-					this.x = scheduledX - this.size('x');
-				} else if (x - this.size('x') === scheduledX) {
-					this.x = scheduledX + this.size('x');
-				}
-
 				// Move along the Y axis
-				if (y < scheduledY) {
+				if (x + this.size('y') === scheduledY) {
+					this.y = scheduledY - this.size('y');
+					this.scheduledY = scheduledY - this.size('y');
+				} else if (y - this.size('y') === scheduledY) {
+					this.y = scheduledY + this.size('y');
+					this.scheduledY = scheduledY + this.size('y');
+				} else if (y < scheduledY) {
 					this.y += this.speed * modifier;
 				} else if (y > scheduledY) {
 					this.y -= this.speed * modifier;
-				}
-
-				// Snap to the grid
-				if (y + this.size('y') === scheduledY) {
-					this.y = scheduledY - this.size('y');
 				}
 			}
 		},
