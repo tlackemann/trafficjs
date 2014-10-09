@@ -11,7 +11,8 @@
 	var TrafficGame = null;
 	
 	var Config = {
-		bitsize: 48
+		bitsize: 48,
+		framerate: 32
 	};
 
 	/**
@@ -210,6 +211,21 @@
 		var keysDown = {};
 
 		/**
+		 * Current framenumber
+		 * @protected
+		 * @var {Number}
+		 */
+		var frameNumber = 0;
+
+
+		/**
+		 * Start time for frame rate
+		 * @protected
+		 * @var {Number}
+		 */
+		var startTime = 0;
+
+		/**
 		 * Canvas element
 		 * @var {Object}
 		 */
@@ -389,7 +405,24 @@
 			this.ctx.font = "24px Helvetica";
 			this.ctx.textAlign = "left";
 			this.ctx.textBaseline = "top";
-			//this.ctx.fillText("Goblins caught: " + opponentsCaught, 32, 32);
+			this.ctx.fillText("FPS: " + this.getFPS(), 32, 32);
+		},
+
+		/**
+		 * Calculate the current framerate
+		 * @return {Number}
+		 */
+		this.getFPS = function(){
+			frameNumber++;
+			var d = now,
+				currentTime = ( d - startTime ) / 1000,
+				result = Math.floor((frameNumber / currentTime));
+
+			if( currentTime > 1 ){
+				startTime = new Date().getTime();
+				frameNumber = 0;
+			}
+			return result;
 		},
 
 		/**
@@ -402,6 +435,7 @@
 			self.update(delta / 1000);
 			self.render();
 			then = now;
+
 			// Request to do this again ASAP
 			requestAnimationFrame(self.main);
 		};
