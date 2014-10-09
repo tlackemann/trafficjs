@@ -13,7 +13,8 @@
 	var TrafficGame = null;
 	
 	var Config = {
-		bitsize: 32,
+		bitsize: 64,
+		gridsize: 6,
 		framerate: 32
 	};
 
@@ -29,6 +30,12 @@
 		 * @var {Object}
 		 */
 		var options = options || {};
+
+		/**
+		 * Reference to self
+		 * @var {Entity}
+		 */
+		var self = this;
 
 		/**
 		 * Entity loaded 
@@ -100,6 +107,18 @@
 		this.y = options.y || 0,
 
 		/**
+		 * Scheduled X position
+		 * @var {Number}
+		 */
+		this.scheduledX = this.x,
+
+		/**
+		 * Scheduled Y position
+		 * @var {Number}
+		 */
+		this.scheduledY = this.y,
+
+		/**
 		 * Entity selected
 		 * @var {Boolean}
 		 */
@@ -124,6 +143,12 @@
 		this.speed = options.speed || Config.bitsize,
 
 		/**
+		 * Lock movement on the X|Y axis
+		 * @var {String}
+		 */
+		this.movement = options.movement || 'x',
+
+		/**
 		 * Set the render method
 		 * @param {Function} method
 		 * @return {Entity}
@@ -141,6 +166,57 @@
 			renderMethod();
 		},
 
+		this.checkCollision = function(checkEntity) {
+			if (this.x <= (checkEntity.x + 32)
+				&& checkEntity.x <= (this.x + 32)
+				&& this.y <= (checkEntity.y + 32)
+				&& checkEntity.y <= (this.y + 32))
+			{
+				console.log(this.name + " is colliding with " + checkEntity.name);
+			}
+		},
+
+		/**
+		 * Determines if the Entity needs to be moved and adjusts accordingly
+		 * Accounts for the size of the grid so it snaps to the farthest edge
+		 * @param {Number} modifier
+		 */
+		this.move = function(modifier) {
+
+			var x = Math.floor(this.x),
+				y = Math.floor(this.y),
+				scheduledX = Math.floor(this.scheduledX),
+				scheduledY = Math.floor(this.scheduledY);
+
+			if (this.selected) {
+				// Move along the X axis 
+				if (x < scheduledX) {
+					this.x += this.speed * modifier;
+				} else if (x > scheduledX) {
+					this.x -= this.speed * modifier;
+				}
+
+				// Snap into the grid
+				if (x + this.size('x') === scheduledX) {
+					this.x = scheduledX - this.size('x');
+				} else if (x - this.size('x') === scheduledX) {
+					this.x = scheduledX + this.size('x');
+				}
+
+				// Move along the Y axis
+				if (y < scheduledY) {
+					this.y += this.speed * modifier;
+				} else if (y > scheduledY) {
+					this.y -= this.speed * modifier;
+				}
+
+				// Snap to the grid
+				if (y + this.size('y') === scheduledY) {
+					this.y = scheduledY - this.size('y');
+				}
+			}
+		},
+
 		/**
 		 * Adds an event to the Entity (well window, for now)
 		 * @param {String} eventName
@@ -149,7 +225,7 @@
 		 */
 		this.addEvent = function(eventName, eventMethod) {
 			addEventListener(eventName, eventMethod, false);
-		}
+		},
 
 		/**
 		 * Checks if the Entity is ready
@@ -186,7 +262,24 @@
 		 */
 		this.canSelect = function(entityName) {
 			return this.allow === entityName;
-		}
+		},
+
+		/**
+		 * Calculates and sets the new position
+		 * @param {Number} x
+		 * @param {Number} y
+		 * @return {Entity}
+		 */
+		this.scheduleMovement = function(x, y) {
+			// Snap the x,y coordinates to the size of the grid
+			if (this.movement.toLowerCase() === 'x') {
+				this.scheduledX = Math.ceil(x/Config.bitsize) * Config.bitsize;
+			} else {
+				this.scheduledY = Math.ceil(y/Config.bitsize) * Config.bitsize;
+			}
+
+			return this;
+		},
 
 		/**
 		 * Perform preload activity
@@ -292,35 +385,21 @@
 		 * Canvas element
 		 * @var {Object}
 		 */
-		this.canvas = document.getElementById("traffic-canvas"),
+		this.canvas = null,
 
 		/**
 		 * CTX object
 		 * @var {Object}
 		 */
-		this.ctx = this.canvas.getContext('2d');
+		this.ctx = null;
 
-		/**
-		 * Check if keys are pressed during update()
-		 * @protected
-		 * @param {Number} modifier
-		 * @return void
-		 */
-		var _checkKeys = function(modifier) {
-			if (38 in keysDown) { // Player holding up
-				selectedEntity.y -= selectedEntity.speed * modifier;
-			}
-			if (40 in keysDown) { // Player holding down
-				selectedEntity.y += selectedEntity.speed * modifier;
-			}
-			if (37 in keysDown) { // Player holding left
-				selectedEntity.x -= selectedEntity.speed * modifier;
-			}
-			if (39 in keysDown) { // Player holding right
-				selectedEntity.x += selectedEntity.speed * modifier;
-			}
+		var _addCanvas = function() {
+			self.canvas = document.createElement("canvas");
+			self.ctx = self.canvas.getContext('2d');
+			self.canvas.width = Config.bitsize * Config.gridsize;
+			self.canvas.height = Config.bitsize * Config.gridsize;
+			document.body.appendChild(self.canvas);
 		};
-
 
 		/**
 		 * Checks for entity collision during update()
@@ -330,14 +409,42 @@
 		 */
 		var _checkCollision = function(modifier) {
 			// Are they touching?
-			if (
-				self.entity('player-1').x <= (self.entity('player-2').x + 32)
-				&& self.entity('player-2').x <= (self.entity('player-1').x + 32)
-				&& self.entity('player-1').y <= (self.entity('player-2').y + 32)
-				&& self.entity('player-2').y <= (self.entity('player-1').y + 32)
-			) {
-				//++player2sCaught;
-				self.reset();
+			// if (
+			// 	self.entity('player-1').x <= (self.entity('player-2').x + 32)
+			// 	&& self.entity('player-2').x <= (self.entity('player-1').x + 32)
+			// 	&& self.entity('player-1').y <= (self.entity('player-2').y + 32)
+			// 	&& self.entity('player-2').y <= (self.entity('player-1').y + 32)
+			// ) {
+			// 	self.reset();
+			// }
+		};
+
+		/**
+		 * Checks for new entity positions and moves them on update()
+		 * @protected
+		 * @param {Number} modifier
+		 * @return void
+		 */
+		var _checkEntities = function(modifier) {
+			var e, c,
+				entity,
+				checkEntity;
+
+			// Check if any of our Entities have new coordinates to move to and move them
+			for(e in entities) {
+				if (entities.hasOwnProperty(e) && entities[e].name !== 'background') {
+					entity = entities[e];
+					// Check the collisions between all entities
+					for (c in entities) {
+						if (entities.hasOwnProperty(e)) {
+							checkEntity = entities[c];
+							if (checkEntity.name !== entity.name && checkEntity.name !== 'background') {
+								entity.checkCollision(checkEntity);
+							}
+						}
+					}
+					entity.move(modifier);
+				}
 			}
 		};
 
@@ -349,7 +456,7 @@
 		var _addEntities = function() {
 		 	// Background entity
 			self.addEntity('background', {
-				blocks: {x: 12, y: 12},
+				blocks: {x: Config.gridsize, y: Config.gridsize},
 				speed: 0
 			});
 			// Main player
@@ -363,8 +470,9 @@
 			// Truck 1
 			self.addEntity('truck-1', {
 				blocks: {x: 1, y: 3},
-				x: 4 * Config.bitsize,
-				y: Config.bitsize
+				x: 2 * Config.bitsize,
+				y: 0,
+				movement: 'y'
 			});
 
 			// Car 1
@@ -392,6 +500,10 @@
 						self.ctx.fillStyle = 'grey';
 						self.ctx.fill();
 					}
+				})
+				.addEvent('click', function(event) {
+					// Move the selected Entity to the farthest path along the movement axis
+					selectedEntity.scheduleMovement(event.x, event.y);
 				});
 
 			// Set the players images draw method
@@ -544,6 +656,9 @@
 		 * @return void
 		 */
 		this.start = function() {
+			// Add the canvas to the page
+			_addCanvas();
+
 			// Setup the entities
 			_addEntities();
 			_configureEntities();
@@ -557,6 +672,7 @@
 			}, false);
 
 			// Run it!
+			this.reset();
 			this.main();
 		},
 
@@ -575,8 +691,8 @@
 			// Render the player2 and player
 			player.x = 0;
 			player.y = 0;
-			player2.x = Config.bitsize * 10;
-			player2.y = Config.bitsize * 5;
+			player2.x = Config.bitsize * 4;
+			player2.y = Config.bitsize * 3;
 		},
 
 		/**
@@ -585,8 +701,8 @@
 		 * @return void
 		 */
 		this.update = function(modifier) {
-			_checkKeys(modifier);
 			_checkCollision(modifier);
+			_checkEntities(modifier);
 		},
 
 		/**
