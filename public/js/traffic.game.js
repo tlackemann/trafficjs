@@ -13,7 +13,7 @@
 	var TrafficGame = null;
 	
 	var Config = {
-		bitsize: 48,
+		bitsize: 32,
 		framerate: 32
 	};
 
@@ -82,16 +82,22 @@
 		}();
 
 		/**
+		 * Name of the entity 
+		 * @var {String}
+		 */
+		this.name = options.name || '',
+
+		/**
 		 * X position
 		 * @var {Number}
 		 */
-		this.x = 0,
+		this.x = options.x || 0,
 
 		/**
 		 * Y position
 		 * @var {Number}
 		 */
-		this.y = 0,
+		this.y = options.y || 0,
 
 		/**
 		 * Entity selected
@@ -100,10 +106,22 @@
 		this.selected = false,
 
 		/**
+		 * Entity turn
+		 * @var {Boolean}
+		 */
+		this.turn = false,
+
+		/**
+		 * Who is allowed to select the Entity
+		 * @var {Boolean|String}
+		 */
+		this.allow = false,
+
+		/**
 		 * Speed
 		 * @var {Number}
 		 */
-		this.speed = options.speed || 0,
+		this.speed = options.speed || Config.bitsize,
 
 		/**
 		 * Set the render method
@@ -159,6 +177,15 @@
 			} else {
 				return blocks;
 			}
+		},
+
+		/**
+		 * Checks if we're allowed to select this Entity
+		 * @param {String} entityName
+		 * @return {Boolean}
+		 */
+		this.canSelect = function(entityName) {
+			return this.allow === entityName;
 		}
 
 		/**
@@ -250,9 +277,16 @@
 		/**
 		 * Current selected Entity
 		 * @protected
-		 * @var {Entity|Boolean}
+		 * @var {Entity}
 		 */
-		var selectedEntity = false;
+		var selectedEntity = null;
+
+		/**
+		 * Current Entity's turn
+		 * @protected
+		 * @var {Entity}
+		 */
+		var currentTurnEntity = null;
 
 		/**
 		 * Canvas element
@@ -274,16 +308,16 @@
 		 */
 		var _checkKeys = function(modifier) {
 			if (38 in keysDown) { // Player holding up
-				self.entity('player').y -= self.entity('player').speed * modifier;
+				selectedEntity.y -= selectedEntity.speed * modifier;
 			}
 			if (40 in keysDown) { // Player holding down
-				self.entity('player').y += self.entity('player').speed * modifier;
+				selectedEntity.y += selectedEntity.speed * modifier;
 			}
 			if (37 in keysDown) { // Player holding left
-				self.entity('player').x -= self.entity('player').speed * modifier;
+				selectedEntity.x -= selectedEntity.speed * modifier;
 			}
 			if (39 in keysDown) { // Player holding right
-				self.entity('player').x += self.entity('player').speed * modifier;
+				selectedEntity.x += selectedEntity.speed * modifier;
 			}
 		};
 
@@ -297,37 +331,57 @@
 		var _checkCollision = function(modifier) {
 			// Are they touching?
 			if (
-				self.entity('player').x <= (self.entity('opponent').x + 32)
-				&& self.entity('opponent').x <= (self.entity('player').x + 32)
-				&& self.entity('player').y <= (self.entity('opponent').y + 32)
-				&& self.entity('opponent').y <= (self.entity('player').y + 32)
+				self.entity('player-1').x <= (self.entity('player-2').x + 32)
+				&& self.entity('player-2').x <= (self.entity('player-1').x + 32)
+				&& self.entity('player-1').y <= (self.entity('player-2').y + 32)
+				&& self.entity('player-2').y <= (self.entity('player-1').y + 32)
 			) {
-				//++opponentsCaught;
+				//++player2sCaught;
 				self.reset();
 			}
 		};
 
-		 var _addEntities = function() {
+		/**
+		 * Add the entities
+		 * @return void
+		 * @todo - Load from some sort of map layout
+		 */
+		var _addEntities = function() {
 		 	// Background entity
 			self.addEntity('background', {
-				blocks: {x: 12, y: 12}
+				blocks: {x: 12, y: 12},
+				speed: 0
 			});
 			// Main player
-			self.addEntity('player', {
-				blocks: {x: 2, y: 1},
-				speed: 200
+			self.addEntity('player-1', {
+				blocks: {x: 2, y: 1}
 			});
 			// Opponent
-			self.addEntity('opponent', {
-				blocks: {x: 2, y: 1},
-				speed: 200
+			self.addEntity('player-2', {
+				blocks: {x: 2, y: 1}
 			});
+			// Truck 1
+			self.addEntity('truck-1', {
+				blocks: {x: 1, y: 3},
+				x: 4 * Config.bitsize,
+				y: Config.bitsize
+			});
+
+			// Car 1
+
+			// Sedan 1
 		 };
 
-		 var _configureEntities = function() {
+		/**
+		 * Configure the entities listeners and draw methods
+		 * @return void
+		 * @todo - Load from some sort of map layout
+		 */
+		var _configureEntities = function() {
 		 	var background = self.entity('background'),
-		 		player = self.entity('player'),
-		 		opponent = self.entity('opponent');
+		 		player = self.entity('player-1'),
+		 		player2 = self.entity('player-2'),
+		 		truck1 = self.entity('truck-1');
 
 			// Set the background images draw method
 			background
@@ -357,30 +411,52 @@
 						maxY = player.size('y') + player.y;
 
 					// Check if we clicked this piece
-					if (event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
+					if (player.canSelect(currentTurnEntity.name) && event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
 						self.selectEntity(player);
 					}
 				});
 
-			// Set the opponent images draw method
-			opponent
+			// Set the player2 images draw method
+			player2
 				.onRender(function() {
-					if (opponent.isReady()) {
+					if (player2.isReady()) {
 						self.ctx.beginPath();
-						self.ctx.rect(opponent.x, opponent.y, opponent.size('x'), opponent.size('y'));
-						self.ctx.fillStyle = (opponent.selected) ? 'yellow' : 'blue';
+						self.ctx.rect(player2.x, player2.y, player2.size('x'), player2.size('y'));
+						self.ctx.fillStyle = (player2.selected) ? 'yellow' : 'blue';
 						self.ctx.fill();
 					}
 				})
 				.addEvent('click', function(event) {
-					var minX = opponent.x,
-						minY = opponent.y,
-						maxX = opponent.size('x') + opponent.x,
-						maxY = opponent.size('y') + opponent.y;
+					var minX = player2.x,
+						minY = player2.y,
+						maxX = player2.size('x') + player2.x,
+						maxY = player2.size('y') + player2.y;
 
 					// Check if we clicked this piece
-					if (event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
-						self.selectEntity(opponent);
+					if (player2.canSelect(currentTurnEntity.name) && event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
+						self.selectEntity(player2);
+					}
+				});
+
+			// Set the truck images draw method
+			truck1
+				.onRender(function() {
+					if (truck1.isReady()) {
+						self.ctx.beginPath();
+						self.ctx.rect(truck1.x, truck1.y, truck1.size('x'), truck1.size('y'));
+						self.ctx.fillStyle = (truck1.selected) ? 'yellow' : 'white';
+						self.ctx.fill();
+					}
+				})
+				.addEvent('click', function(event) {
+					var minX = truck1.x,
+						minY = truck1.y,
+						maxX = truck1.size('x') + truck1.x,
+						maxY = truck1.size('y') + truck1.y;
+
+					// Check if we clicked this piece
+					if (truck1.canSelect(currentTurnEntity.name) && event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
+						self.selectEntity(truck1);
 					}
 				});
 		};
@@ -392,6 +468,9 @@
 		 * @return {Entity}
 		 */
 		this.addEntity = function(name, options) {
+			// Add the name attribute
+			options = options || {};
+			options.name = name;
 			entities[name] = new Entity(options);
 			entities[name].start();
 			return entities[name];
@@ -434,6 +513,33 @@
 		},
 
 		/**
+		 * Set the current Entity's turn
+		 * @param {Entity} entity
+		 * @return {Traffic}
+		 */
+		this.setTurn = function(entity) {
+			var e;
+
+			// Select the entity who's turn it is
+			this.selectEntity(entity);
+
+			// Let all entities know who's allowed to move them
+			for(e in entities) {
+				if (entities.hasOwnProperty(e)) {
+					if (!(entity.name === 'player-1' && entities[e].name === 'player-2')) {
+						entities[e].allow = entity.name;
+					}
+				}
+			}
+
+			// Set the selected entity
+			entity.turn = true;
+			currentTurnEntity = entity;
+
+			return this;
+		},
+
+		/**
 		 * Load the entities and starts the game loop
 		 * @return void
 		 */
@@ -457,19 +563,20 @@
 		/**
 		 * Reset the game state
 		 * @return void
+		 * @todo - Load from some sort of map layout
 		 */
 		this.reset = function() {
-			var player = this.entity('player'),
-				opponent = this.entity('opponent');
+			var player = this.entity('player-1'),
+				player2 = this.entity('player-2');
 
 			// Set the first player to the selected entity
-			this.selectEntity(player);
+			this.setTurn(player);
 
-			// Render the opponent and player
+			// Render the player2 and player
 			player.x = 0;
 			player.y = 0;
-			opponent.x = 200;
-			opponent.y = 200;
+			player2.x = Config.bitsize * 10;
+			player2.y = Config.bitsize * 5;
 		},
 
 		/**
@@ -485,18 +592,22 @@
 		/**
 		 * Renders the current game states
 		 * @return void
+		 * @todo - Load from some sort of map layout
 		 */
 		this.render = function() {
 			this.entity('background').render();
-			this.entity('player').render();
-			this.entity('opponent').render();
+			this.entity('player-1').render();
+			this.entity('player-2').render();
+			this.entity('truck-1').render();
 
 			// Score
-			this.ctx.fillStyle = "rgb(250, 250, 250)";
-			this.ctx.font = "24px Helvetica";
+			this.ctx.fillStyle = "rgb(0,0,0)";
+			this.ctx.font = "12px Helvetica";
 			this.ctx.textAlign = "left";
 			this.ctx.textBaseline = "top";
-			this.ctx.fillText("FPS: " + this.getFPS(), 32, 32);
+			//this.ctx.fillText("FPS: " + this.getFPS(), 32, 32);
+			this.ctx.fillText("Turn: " + currentTurnEntity.name, Config.bitsize / 4, Config.bitsize - 12);
+			this.ctx.fillText("Selected: " + selectedEntity.name, Config.bitsize / 4, Config.bitsize / 4);
 		},
 
 		/**
