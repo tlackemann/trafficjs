@@ -14,7 +14,7 @@
 	
 	var Config = {
 		bitsize: 64,
-		gridsize: 6,
+		gridsize: 7,
 		framerate: 32
 	};
 
@@ -690,9 +690,13 @@
 
 			// Render the player2 and player
 			player.x = 0;
-			player.y = 0;
-			player2.x = Config.bitsize * 4;
-			player2.y = Config.bitsize * 3;
+			player.y = Config.bitsize * 1;
+			// To prevent default movement
+			player.scheduledX = 0;
+			player.scheduledY = Config.bitsize * 1;
+
+			player2.x = (Config.bitsize * Config.gridsize) - player2.size('x');
+			player2.y = (Config.bitsize * Config.gridsize) - player2.size('y') - Config.bitsize;
 		},
 
 		/**
