@@ -13,7 +13,7 @@
 	var TrafficGame = null;
 	
 	var Config = {
-		bitsize: 64,
+		bitsize: 42,
 		gridsize: 7,
 		framerate: 32,
 		defaultSpeed: 500
@@ -30,48 +30,57 @@
 		 * Default set of options
 		 * @var {Object}
 		 */
-		var options = options || {};
+		var options = options || {},
 
 		/**
 		 * Reference to self
 		 * @var {Entity}
 		 */
-		var self = this;
+		self = this,
 
 		/**
 		 * Entity loaded 
 		 * @protected
 		 * @var {Boolean}
 		 */
-		var ready = false;
+		ready = false,
 
 		/**
 		 * Image source
 		 * @protected
 		 * @param {String}
 		 */
-		var imageSrc = options.imageSrc || '';
+		imageSrc = options.imageSrc || '',
 
 		/**
 		 * Entity image (if any)
 		 * @protected
 		 * @var {String|Boolean}
 		 */
-		var image = new Image();
+		image = new Image(),
 
 		/**
 		 * The method to run when render() is called
 		 * @protected
 		 * @var {Function}
 		 */
-		var renderMethod = function() {};
+		renderMethod = function() {},
+
+		processing = false,
+
+		/**
+		 * Entity selected
+		 * @protected
+		 * @var {Boolean}
+		 */
+		selected = false,
 
 		/**
 		 * The size, in blocks, of the Entity (x, y)
 		 * @protected
 		 * @var {Object}
 		 */
-		var blocks = function() {
+		blocks = function() {
 			var bitX = Config.bitsize,
 				bitY = Config.bitsize,
 				option = options.blocks;
@@ -118,12 +127,6 @@
 		 * @var {Number}
 		 */
 		this.scheduledY = this.y,
-
-		/**
-		 * Entity selected
-		 * @var {Boolean}
-		 */
-		this.selected = false,
 
 		/**
 		 * Entity turn
@@ -190,7 +193,7 @@
 				scheduledX = Math.floor(this.scheduledX),
 				scheduledY = Math.floor(this.scheduledY);
 
-			if (this.selected) {
+			if (selected) {
 				if (x !== scheduledX) {
 					// Move along the X axis 
 					if (x + this.size('x') === scheduledX) {
@@ -261,6 +264,26 @@
 			}
 		},
 
+		this.select = function () {
+			console.log("Selecting " + this.name);
+			selected = true;
+			processing = true;
+		},
+
+		this.unselect = function() {
+			console.log("Unselecting " + this.name);
+			selected = false;
+		},
+
+		/**
+		 * Checks if the Entity is selected
+		 * @param {String} entityName
+		 * @return {Boolean}
+		 */
+		this.isSelected = function(entityName) {
+			return selected;
+		},
+
 		/**
 		 * Checks if we're allowed to select this Entity
 		 * @param {String} entityName
@@ -277,13 +300,19 @@
 		 * @return {Entity}
 		 */
 		this.scheduleMovement = function(x, y) {
-			// Snap the x,y coordinates to the size of the grid
-			if (this.movement.toLowerCase() === 'x') {
-				this.scheduledX = Math.ceil(x/Config.bitsize) * Config.bitsize;
-			} else {
-				this.scheduledY = Math.ceil(y/Config.bitsize) * Config.bitsize;
-			}
+			// If the Entity is selected, schedule the movement
+			console.log(this.name + " scheduleMovement called (" + x + "," + y + ")");
+			if (selected) {
 
+				console.log("Moving " + this.name + " to " + x + "," + y);
+				// Snap the x,y coordinates to the size of the grid
+				if (this.movement.toLowerCase() === 'x') {
+					this.scheduledX = Math.ceil(x/Config.bitsize) * Config.bitsize;
+				} else {
+					this.scheduledY = Math.ceil(y/Config.bitsize) * Config.bitsize;
+				}
+				
+			}
 			return this;
 		},
 
@@ -498,10 +527,6 @@
 						self.ctx.fillStyle = 'grey';
 						self.ctx.fill();
 					}
-				})
-				.addEvent('click', function(event) {
-					// Move the selected Entity to the farthest path along the movement axis
-					selectedEntity.scheduleMovement(event.x, event.y);
 				});
 
 			// Set the players images draw method
@@ -510,7 +535,7 @@
 					if (player.isReady()) {
 						self.ctx.beginPath();
 						self.ctx.rect(player.x, player.y, player.size('x'), player.size('y'));
-						self.ctx.fillStyle = (player.selected) ? 'yellow' : 'red';
+						self.ctx.fillStyle = (player.isSelected()) ? 'yellow' : 'red';
 						self.ctx.fill();
 					}
 				})
@@ -523,6 +548,9 @@
 					// Check if we clicked this piece
 					if (player.canSelect(currentTurnEntity.name) && event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
 						self.selectEntity(player);
+					} else {
+						// Move the selected Entity to the farthest path along the movement axis
+						player.scheduleMovement(event.x, event.y);
 					}
 				});
 
@@ -532,7 +560,7 @@
 					if (player2.isReady()) {
 						self.ctx.beginPath();
 						self.ctx.rect(player2.x, player2.y, player2.size('x'), player2.size('y'));
-						self.ctx.fillStyle = (player2.selected) ? 'yellow' : 'blue';
+						self.ctx.fillStyle = (player2.isSelected()) ? 'yellow' : 'blue';
 						self.ctx.fill();
 					}
 				})
@@ -545,6 +573,9 @@
 					// Check if we clicked this piece
 					if (player2.canSelect(currentTurnEntity.name) && event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
 						self.selectEntity(player2);
+					} else {
+						// Move the selected Entity to the farthest path along the movement axis
+						player2.scheduleMovement(event.x, event.y);
 					}
 				});
 
@@ -554,7 +585,7 @@
 					if (truck1.isReady()) {
 						self.ctx.beginPath();
 						self.ctx.rect(truck1.x, truck1.y, truck1.size('x'), truck1.size('y'));
-						self.ctx.fillStyle = (truck1.selected) ? 'yellow' : 'white';
+						self.ctx.fillStyle = (truck1.isSelected()) ? 'yellow' : 'white';
 						self.ctx.fill();
 					}
 				})
@@ -567,6 +598,9 @@
 					// Check if we clicked this piece
 					if (truck1.canSelect(currentTurnEntity.name) && event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
 						self.selectEntity(truck1);
+					} else {
+						// Move the selected Entity to the farthest path along the movement axis
+						truck1.scheduleMovement(event.x, event.y);
 					}
 				});
 		};
@@ -611,12 +645,14 @@
 			// Set all other entities as unselected
 			for(e in entities) {
 				if (entities.hasOwnProperty(e)) {
-					entities[e].selected = false;
+					entities[e].unselect();
 				}
 			}
 
 			// Set the selected entity
-			entity.selected = true;
+			entity.select();
+
+			// Make the new selected entity available to the game
 			selectedEntity = entity;
 
 			return this;
@@ -724,8 +760,9 @@
 			this.ctx.textAlign = "left";
 			this.ctx.textBaseline = "top";
 			//this.ctx.fillText("FPS: " + this.getFPS(), 32, 32);
-			this.ctx.fillText("Turn: " + currentTurnEntity.name, Config.bitsize / 4, Config.bitsize - 12);
 			this.ctx.fillText("Selected: " + selectedEntity.name, Config.bitsize / 4, Config.bitsize / 4);
+			this.ctx.fillText("Turn: " + currentTurnEntity.name, Config.bitsize / 4, Config.bitsize / 2);
+			this.ctx.fillText("FPS: " + this.getFPS(), Config.bitsize / 4, Config.bitsize - (Config.bitsize / 4));
 		},
 
 		/**
