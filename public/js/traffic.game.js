@@ -167,20 +167,21 @@
 			renderMethod();
 		},
 
+		/**
+		 * Checks if this Entity is colliding with another Entity
+		 * Should prevent the Entity from moving further
+		 * @param {Entity} checkEntity
+		 * @return void
+		 */
 		this.checkCollision = function(checkEntity) {
-			// if (this.x <= (checkEntity.x + checkEntity.size('x'))
-			// 	&& checkEntity.x <= (this.x + this.size('x'))
-			// 	&& this.y <= (checkEntity.y + checkEntity.size('y'))
-			// 	&& checkEntity.y <= (this.y + this.size('y')))
-			// {
-			// 	console.log(this.name + " is colliding with " + checkEntity.name);
-			// }
+
 		},
 
 		/**
 		 * Determines if the Entity needs to be moved and adjusts accordingly
 		 * Accounts for the size of the grid so it snaps to the farthest edge
 		 * @param {Number} modifier
+		 * @return void
 		 */
 		this.move = function(modifier) {
 
@@ -190,30 +191,33 @@
 				scheduledY = Math.floor(this.scheduledY);
 
 			if (this.selected) {
-				// Move along the X axis 
-				if (x + this.size('x') === scheduledX) {
-					this.x = scheduledX - this.size('x');
-					this.scheduledX = scheduledX - this.size('x');
-				} else if (x - this.size('x') === scheduledX) {
-					this.x = scheduledX + this.size('x');
-					this.scheduledX = scheduledX + this.size('x');
-				} else if (x < scheduledX) {
-					this.x += this.speed * modifier;
-				} else if (x > scheduledX) {
-					this.x -= this.speed * modifier;
+				if (x !== scheduledX) {
+					// Move along the X axis 
+					if (x + this.size('x') === scheduledX) {
+						this.x = scheduledX - this.size('x');
+						this.scheduledX = scheduledX - this.size('x');
+					} else if (x - this.size('x') === scheduledX) {
+						this.x = scheduledX + this.size('x');
+						this.scheduledX = scheduledX + this.size('x');
+					} else if (x < scheduledX) {
+						this.x += this.speed * modifier;
+					} else if (x > scheduledX) {
+						this.x -= this.speed * modifier;
+					}
 				}
-
-				// Move along the Y axis
-				if (x + this.size('y') === scheduledY) {
-					this.y = scheduledY - this.size('y');
-					this.scheduledY = scheduledY - this.size('y');
-				} else if (y - this.size('y') === scheduledY) {
-					this.y = scheduledY + this.size('y');
-					this.scheduledY = scheduledY + this.size('y');
-				} else if (y < scheduledY) {
-					this.y += this.speed * modifier;
-				} else if (y > scheduledY) {
-					this.y -= this.speed * modifier;
+				if (y !== scheduledY) {
+					// Move along the Y axis
+					if (x + this.size('y') === scheduledY) {
+						this.y = scheduledY - this.size('y');
+						this.scheduledY = scheduledY - this.size('y');
+					} else if (y - this.size('y') === scheduledY) {
+						this.y = scheduledY + this.size('y');
+						this.scheduledY = scheduledY + this.size('y');
+					} else if (y < scheduledY) {
+						this.y += this.speed * modifier;
+					} else if (y > scheduledY) {
+						this.y -= this.speed * modifier;
+					}
 				}
 			}
 		},
@@ -226,6 +230,7 @@
 		 */
 		this.addEvent = function(eventName, eventMethod) {
 			addEventListener(eventName, eventMethod, false);
+			return this;
 		},
 
 		/**
@@ -409,15 +414,7 @@
 		 * @return void
 		 */
 		var _checkCollision = function(modifier) {
-			// Are they touching?
-			// if (
-			// 	self.entity('player-1').x <= (self.entity('player-2').x + 32)
-			// 	&& self.entity('player-2').x <= (self.entity('player-1').x + 32)
-			// 	&& self.entity('player-1').y <= (self.entity('player-2').y + 32)
-			// 	&& self.entity('player-2').y <= (self.entity('player-1').y + 32)
-			// ) {
-			// 	self.reset();
-			// }
+
 		};
 
 		/**
