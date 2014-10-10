@@ -14,7 +14,7 @@
 	
 	var Config = {
 		id: "traffic-canvas",
-		bitsize: 42,
+		bitsize: 64,
 		gridsize: 7,
 		framerate: 32,
 		defaultSpeed: 200
@@ -191,13 +191,12 @@
 		 * Accounts for the size of the grid so it snaps to the farthest edge
 		 * @param {Number} modifier
 		 * @return void
-		 * @todo - This method is bad, Entities shake when moving before being locked into place
 		 */
 		this.move = function(modifier) {
-			var x = Math.floor(this.x),
-				y = Math.floor(this.y),
-				scheduledX = Math.floor(this.scheduledX),
-				scheduledY = Math.floor(this.scheduledY);
+			var x = this.x,
+				y = this.y,
+				scheduledX = this.scheduledX,
+				scheduledY = this.scheduledY;
 
 			// @todo - This is bad because if we ever create a 1x1 Entity, they will only be able to move
 			// x|y but not both, might be useful for moving "powerups" around the map so the players can
@@ -205,21 +204,22 @@
 			if (selected && processing) {
 				// Move forward  X
 				if (this.movement === 'x') {
-					if (x + this.size('x') < scheduledX) {
+					if (scheduledX > x + this.size('x')) {
 						this.x += this.speed * modifier;
 					}
 					// Move backward X
-					else if (scheduledX - (this.size('x') / 2) < x) {
+					else if (scheduledX - Config.bitsize < x) {
 						this.x -= this.speed * modifier;
 					} else {
 						processing = false;
 					}
 				} else if (this.movement === 'y') {
-					if (y + this.size('y') < scheduledY) {
+					// Move forward Y
+					if (scheduledY > y + this.size('y')) {
 						this.y += this.speed * modifier;
 					}
-					// Move backward X
-					else if (scheduledY - (this.size('y') / 2) < y) {
+					// Move backward Y
+					else if (scheduledY - Config.bitsize < y) {
 						this.y -= this.speed * modifier;
 					} else {
 						processing = false;
