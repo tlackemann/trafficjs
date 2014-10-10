@@ -13,6 +13,7 @@
 	var TrafficGame = null;
 	
 	var Config = {
+		id: "traffic-canvas",
 		bitsize: 42,
 		gridsize: 7,
 		framerate: 32,
@@ -232,7 +233,8 @@
 		 * @return {Entity}
 		 */
 		this.addEvent = function(eventName, eventMethod) {
-			addEventListener(eventName, eventMethod, false);
+			var canvas = self.canvas || document.getElementById(Config.id);
+			canvas.addEventListener(eventName, eventMethod, false);
 			return this;
 		},
 
@@ -433,6 +435,7 @@
 			self.ctx = self.canvas.getContext('2d');
 			self.canvas.width = Config.bitsize * Config.gridsize;
 			self.canvas.height = Config.bitsize * Config.gridsize;
+			self.canvas.id = Config.id;
 			document.body.appendChild(self.canvas);
 		};
 
@@ -470,7 +473,9 @@
 							}
 						}
 					}
-					entity.move(modifier);
+					if (selectedEntity.name === entity.name) {
+						entity.move(modifier);
+					}
 				}
 			}
 		};
@@ -544,7 +549,6 @@
 						minY = player.y,
 						maxX = player.size('x') + player.x,
 						maxY = player.size('y') + player.y;
-
 					// Check if we clicked this piece
 					if (player.canSelect(currentTurnEntity.name) && event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
 						self.selectEntity(player);
