@@ -67,6 +67,11 @@
 		 */
 		renderMethod = function() {},
 
+		/**
+		 * If we're processing then the Entity is moving
+		 * @protected
+		 * @var {Boolean}
+		 */
 		processing = false,
 
 		/**
@@ -194,7 +199,7 @@
 				scheduledX = Math.floor(this.scheduledX),
 				scheduledY = Math.floor(this.scheduledY);
 
-			if (selected && !processing) {
+			if (selected && processing) {
 				if (x !== scheduledX) {
 					// console.log("Moving " + this.name + " to " + scheduledX + "," + scheduledY);
 					// console.log("Current " + x + ", " + y);
@@ -202,9 +207,13 @@
 					if (x + this.size('x') === scheduledX) {
 						this.x = scheduledX - this.size('x');
 						this.scheduledX = scheduledX - this.size('x');
+						// We've reached the destination, no longer processing
+						processing = false;
 					} else if (x - this.size('x') === scheduledX) {
 						this.x = scheduledX + this.size('x');
 						this.scheduledX = scheduledX + this.size('x');
+						// We've reached the destination, no longer processing
+						processing = false;
 					} else if (x < scheduledX) {
 						this.x += this.speed * modifier;
 					} else if (x > scheduledX) {
@@ -218,9 +227,13 @@
 					if (x + this.size('y') === scheduledY) {
 						this.y = scheduledY - this.size('y');
 						this.scheduledY = scheduledY - this.size('y');
+						// We've reached the destination, no longer processing
+						processing = false;
 					} else if (y - this.size('y') === scheduledY) {
 						this.y = scheduledY + this.size('y');
 						this.scheduledY = scheduledY + this.size('y');
+						// We've reached the destination, no longer processing
+						processing = false;
 					} else if (y < scheduledY) {
 						this.y += this.speed * modifier;
 					} else if (y > scheduledY) {
@@ -277,7 +290,12 @@
 		this.select = function () {
 			// console.log("Selecting " + this.name);
 			selected = true;
-			processing = true;
+
+			// Let the Entity know that we've just selected it to prevent movement
+			// on the initial click (something about when the event is fired and
+			// timing of the the update() method)
+			processing = false;
+
 			return this;
 		},
 
@@ -324,7 +342,9 @@
 				} else {
 					this.scheduledY = Math.ceil(y/Config.bitsize) * Config.bitsize;
 				}
-				processing = false;
+				// Now that we've told the Entity to move to a new location
+				// set processing to true so we know to move it
+				processing = true;
 			}
 			return this;
 		},
