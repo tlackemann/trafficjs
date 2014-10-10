@@ -17,7 +17,7 @@
 		bitsize: 42,
 		gridsize: 7,
 		framerate: 32,
-		defaultSpeed: 500
+		defaultSpeed: 200
 	};
 
 	/**
@@ -191,53 +191,38 @@
 		 * Accounts for the size of the grid so it snaps to the farthest edge
 		 * @param {Number} modifier
 		 * @return void
+		 * @todo - This method is bad, Entities shake when moving before being locked into place
 		 */
 		this.move = function(modifier) {
-
 			var x = Math.floor(this.x),
 				y = Math.floor(this.y),
 				scheduledX = Math.floor(this.scheduledX),
 				scheduledY = Math.floor(this.scheduledY);
 
+			// @todo - This is bad because if we ever create a 1x1 Entity, they will only be able to move
+			// x|y but not both, might be useful for moving "powerups" around the map so the players can
+			// reach them by moving other pieces
 			if (selected && processing) {
-				if (x !== scheduledX) {
-					// console.log("Moving " + this.name + " to " + scheduledX + "," + scheduledY);
-					// console.log("Current " + x + ", " + y);
-					// Move along the X axis 
-					if (x + this.size('x') === scheduledX) {
-						this.x = scheduledX - this.size('x');
-						this.scheduledX = scheduledX - this.size('x');
-						// We've reached the destination, no longer processing
-						processing = false;
-					} else if (x - this.size('x') === scheduledX) {
-						this.x = scheduledX + this.size('x');
-						this.scheduledX = scheduledX + this.size('x');
-						// We've reached the destination, no longer processing
-						processing = false;
-					} else if (x < scheduledX) {
+				// Move forward  X
+				if (this.movement === 'x') {
+					if (x + this.size('x') < scheduledX) {
 						this.x += this.speed * modifier;
-					} else if (x > scheduledX) {
-						this.x -= this.speed * modifier;
 					}
-				}
-				if (y !== scheduledY) {
-					// console.log("Moving " + this.name + " to " + scheduledX + "," + scheduledY);
-					// console.log("Current " + x + ", " + y);
-					// Move along the Y axis
-					if (x + this.size('y') === scheduledY) {
-						this.y = scheduledY - this.size('y');
-						this.scheduledY = scheduledY - this.size('y');
-						// We've reached the destination, no longer processing
+					// Move backward X
+					else if (scheduledX - (this.size('x') / 2) < x) {
+						this.x -= this.speed * modifier;
+					} else {
 						processing = false;
-					} else if (y - this.size('y') === scheduledY) {
-						this.y = scheduledY + this.size('y');
-						this.scheduledY = scheduledY + this.size('y');
-						// We've reached the destination, no longer processing
-						processing = false;
-					} else if (y < scheduledY) {
+					}
+				} else if (this.movement === 'y') {
+					if (y + this.size('y') < scheduledY) {
 						this.y += this.speed * modifier;
-					} else if (y > scheduledY) {
+					}
+					// Move backward X
+					else if (scheduledY - (this.size('y') / 2) < y) {
 						this.y -= this.speed * modifier;
+					} else {
+						processing = false;
 					}
 				}
 			}
@@ -277,7 +262,7 @@
 		 */
 		this.size = function(xy) {
 			if (xy) {
-				return blocks[xy];
+				return parseInt(blocks[xy]);
 			} else {
 				return blocks;
 			}
@@ -336,9 +321,15 @@
 		this.scheduleMovement = function(x, y) {
 			// If the Entity is selected, schedule the movement
 			if (selected) {
+
+				console.log("Clicked " + x);
+				console.log("Current fartest edge " + Math.floor((this.size('x') + this.x)));
+				console.log("Current nearest edge " + Math.floor(this.x));
+
 				// Snap the x,y coordinates to the size of the grid
 				if (this.movement.toLowerCase() === 'x') {
 					this.scheduledX = Math.ceil(x/Config.bitsize) * Config.bitsize;
+					console.log("Scheduled to move to " + this.scheduledX);
 				} else {
 					this.scheduledY = Math.ceil(y/Config.bitsize) * Config.bitsize;
 				}
