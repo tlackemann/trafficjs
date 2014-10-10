@@ -194,8 +194,10 @@
 				scheduledX = Math.floor(this.scheduledX),
 				scheduledY = Math.floor(this.scheduledY);
 
-			if (selected) {
+			if (selected && !processing) {
 				if (x !== scheduledX) {
+					// console.log("Moving " + this.name + " to " + scheduledX + "," + scheduledY);
+					// console.log("Current " + x + ", " + y);
 					// Move along the X axis 
 					if (x + this.size('x') === scheduledX) {
 						this.x = scheduledX - this.size('x');
@@ -210,6 +212,8 @@
 					}
 				}
 				if (y !== scheduledY) {
+					// console.log("Moving " + this.name + " to " + scheduledX + "," + scheduledY);
+					// console.log("Current " + x + ", " + y);
 					// Move along the Y axis
 					if (x + this.size('y') === scheduledY) {
 						this.y = scheduledY - this.size('y');
@@ -227,7 +231,7 @@
 		},
 
 		/**
-		 * Adds an event to the Entity (well window, for now)
+		 * Adds an event to the canvas
 		 * @param {String} eventName
 		 * @param {Function} eventMethod
 		 * @return {Entity}
@@ -266,15 +270,25 @@
 			}
 		},
 
+		/**
+		 * Selects the Entity
+		 * @return {Entity}
+		 */
 		this.select = function () {
-			console.log("Selecting " + this.name);
+			// console.log("Selecting " + this.name);
 			selected = true;
 			processing = true;
+			return this;
 		},
 
+		/**
+		 * Unselects the Entity
+		 * @return {Entity}
+		 */
 		this.unselect = function() {
-			console.log("Unselecting " + this.name);
+			//console.log("Unselecting " + this.name);
 			selected = false;
+			return this;
 		},
 
 		/**
@@ -303,17 +317,14 @@
 		 */
 		this.scheduleMovement = function(x, y) {
 			// If the Entity is selected, schedule the movement
-			console.log(this.name + " scheduleMovement called (" + x + "," + y + ")");
 			if (selected) {
-
-				console.log("Moving " + this.name + " to " + x + "," + y);
 				// Snap the x,y coordinates to the size of the grid
 				if (this.movement.toLowerCase() === 'x') {
 					this.scheduledX = Math.ceil(x/Config.bitsize) * Config.bitsize;
 				} else {
 					this.scheduledY = Math.ceil(y/Config.bitsize) * Config.bitsize;
 				}
-				
+				processing = false;
 			}
 			return this;
 		},
