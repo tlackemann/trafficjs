@@ -10,6 +10,7 @@ module.exports = function(grunt) {
       build: {
         src: [
           'public/js/game/config.js',
+          'public/js/game/levels/*.js',
           'public/js/game/entity.js',
           'public/js/game/traffic.js'
         ],
