@@ -6,10 +6,10 @@
  * @author		Thomas Lackemann <tommylackemann@gmail.com>
  * @copyright	Copyright (c) 2014, Thomas Lackemann
  */
- 
+
 var Config = {
 	id: "traffic-canvas",
-	bitsize: 64,
+	bitsize: 50,
 	gridsize: 7,
 	defaultSpeed: 200,
 	/**

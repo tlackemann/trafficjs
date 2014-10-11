@@ -203,11 +203,18 @@ var Entity = function(options) {
 				else if (scheduledX - Config.bitsize < x) {
 					this.x -= this.speed * modifier;
 				}
-				// done moving
-				else {
+				// Done moving
+				if (scheduledX - Config.bitsize == Math.ceil(x) || scheduledX - Config.bitsize == Math.floor(x)) {
+					this.x = scheduledX - Config.bitsize;
 					this.scheduledX = false;
-					processing = false;
+					//processing = false;
 				}
+				if (scheduledX == Math.ceil(x) + this.size('x') || scheduledX == Math.floor(x) + this.size('x')) {
+					this.x = scheduledX - this.size('x');
+					this.scheduledX = false;
+					//processing = false;
+				}
+
 
 			} else if (this.movement === 'y') {
 				// Move forward Y
@@ -218,10 +225,16 @@ var Entity = function(options) {
 				else if (scheduledY - Config.bitsize < y) {
 					this.y -= this.speed * modifier;
 				}
-				// done moving
-				else {
+				// Done moving
+				if (scheduledY - Config.bitsize == Math.ceil(y) || scheduledY - Config.bitsize == Math.floor(y)) {
+					this.y = scheduledY - Config.bitsize;
 					this.scheduledY = false;
-					processing = false;
+					//processing = false;
+				}
+				if (scheduledY == Math.ceil(y) + this.size('y') || scheduledY == Math.floor(y) + this.size('y')) {
+					this.y = scheduledY - this.size('y');
+					this.scheduledY = false;
+					//processing = false;
 				}
 			}
 		}
@@ -272,7 +285,6 @@ var Entity = function(options) {
 	 * @return {Entity}
 	 */
 	this.select = function () {
-		// console.log("Selecting " + this.name);
 		selected = true;
 
 		// Let the Entity know that we've just selected it to prevent movement
@@ -288,7 +300,6 @@ var Entity = function(options) {
 	 * @return {Entity}
 	 */
 	this.unselect = function() {
-		//console.log("Unselecting " + this.name);
 		selected = false;
 		return this;
 	},
@@ -323,10 +334,8 @@ var Entity = function(options) {
 			// Snap the x,y coordinates to the size of the grid
 			if (this.movement.toLowerCase() === 'x') {
 				this.scheduledX = Math.ceil(x/Config.bitsize) * Config.bitsize;
-				console.log("Scheduled to move " + this.name + " to " + this.scheduledX);
 			} else if (this.movement.toLowerCase() === 'y') {
 				this.scheduledY = Math.ceil(y/Config.bitsize) * Config.bitsize;
-				console.log("Scheduled to move " + this.name + " to " + this.scheduledY);
 			}
 		} else if (!processing) {
 			// Now that we've told the Entity to move to a new location

@@ -237,6 +237,7 @@ var Traffic = function() {
 					self.ctx.textBaseline = "top";
 					self.ctx.fillStyle = 'black';
 					self.ctx.fillText(block.name, block.x + (block.size('x') / 2), block.y + (block.size('y') / 2));
+					self.ctx.fillText(block.x + ', ' + block.y, block.x + (block.size('x') / 2), block.y + (block.size('y') / 2) + 12);
 				}
 			}
 		}
@@ -308,7 +309,6 @@ var Traffic = function() {
 												&& clickY <= entityMaxY);
 
 							if (entityClicked) {
-								console.log("Selecting " + entity.name);
 								self.selectEntity(entity);
 							}
 						}
@@ -336,7 +336,7 @@ var Traffic = function() {
 				}
 			});
 	
-		// Loop through the entities and set the render methods
+		// Loop through the entities and attach the render method
 		for (i in entities) {
 			if (entities.hasOwnProperty(i) && entities[i].name !== 'background') {
 				entities[i].onRender(_renderBlock(entities[i]));
@@ -352,7 +352,6 @@ var Traffic = function() {
 			|| checkEntity.y > entity.y + entity.size('y')
 			|| checkEntity.y + checkEntity.size('y') < entity.y))
 		{
-			console.log(entity.name + ' is colliding with ' + checkEntity.name);
 			return true;
 		}
 
@@ -419,8 +418,6 @@ var Traffic = function() {
 	 */
 	this.setTurn = function(entity) {
 		var e;
-
-		console.log("Changing turns " + entity.name);
 		// Select the entity who's turn it is
 		this.selectEntity(entity);
 
