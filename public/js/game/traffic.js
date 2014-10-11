@@ -122,11 +122,16 @@ var Traffic = function() {
 	 * @return void
 	 */
 	_checkEntities = function(modifier) {
-		var collisions = {},
-			entity,
+		var entity,
 			e;
 
 		if (selectedEntity) {
+			// Check all entity collisions
+			for (e in entities) {
+				if (entities.hasOwnProperty(e) && entities.name !== 'background') {
+					selectedEntity.checkCollision(entities[e]);
+				}
+			}
 			selectedEntity.move(modifier);
 		}
 	},
@@ -185,7 +190,22 @@ var Traffic = function() {
 			speed: 0,
 			color: level.background
 		});
+		// add the exits
+		for (e in level.exits) {
+			if (level.exits.hasOwnProperty(e)) {
+				entity = level.exits[e];
+				self.addEntity('exit-' + e, {
+					imageSrc: entity.imageSrc,
+					blocks: {x: 1, y: 1},
+					x: entity.x,
+					y: entity.y,
+					movement: entity.movement,
+					color: 'black'
+				})
+			}
+		}
 
+		// add the objects
 		for (e in level.objects) {
 			if (level.objects.hasOwnProperty(e)) {
 				entity = level.objects[e];
@@ -208,7 +228,7 @@ var Traffic = function() {
 	 * @param {Object} block
 	 * @return void
 	 */
-	_renderBlock = function(block) {
+	_onRenderBlock = function(block) {
 		return function() {
 			if (block.isReady()) {
 				// The block itself
@@ -240,7 +260,11 @@ var Traffic = function() {
 					self.ctx.textAlign = "center";
 					self.ctx.textBaseline = "top";
 					self.ctx.fillStyle = 'black';
-					self.ctx.fillText(block.name, block.x + (block.size('x') / 2), block.y + (block.size('y') / 2));
+					if (block.allow) {
+						self.ctx.fillText(block.name, block.x + (block.size('x') / 2), block.y + (block.size('y') / 2));
+					} else {
+						self.ctx.fillText('[x] ' + block.name, block.x + (block.size('x') / 2), block.y + (block.size('y') / 2));
+					}
 					self.ctx.fillText(block.x + ', ' + block.y, block.x + (block.size('x') / 2), block.y + (block.size('y') / 2) + 12);
 				}
 			}
@@ -290,7 +314,6 @@ var Traffic = function() {
 					entityMaxY,
 					entity,
 					checkEntity,
-					collision,
 					e,
 					c;
 
@@ -298,9 +321,8 @@ var Traffic = function() {
 				for(e in entities) {
 					if (entities.hasOwnProperty(e)) {
 						entity = entities[e];
-						collision = false;
 						// Don't try to move the background
-						if (entity.name !== 'background') {
+						if (entity.name !== 'background' && entity.name.indexOf('exit') !== 0) {
 							// Get the entity coordinates vs where was clicked
 							entityMinX = entity.x,
 							entityMinY = entity.y,
@@ -336,14 +358,14 @@ var Traffic = function() {
 				}
 
 				if (entityClicked) {
-					selectedEntity.scheduleMovement(clickX, clickY, entities);
+					selectedEntity.scheduleMovement(clickX, clickY);
 				}
 			});
 	
 		// Loop through the entities and attach the render method
 		for (i in entities) {
 			if (entities.hasOwnProperty(i) && entities[i].name !== 'background') {
-				entities[i].onRender(_renderBlock(entities[i]));
+				entities[i].onRender(_onRenderBlock(entities[i]));
 			}
 		}
 	};

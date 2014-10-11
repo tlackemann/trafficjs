@@ -68,6 +68,9 @@ var Entity = function(options) {
 	 */
 	selected = false,
 
+	maxLimitX = false,
+	maxLimitY = false,
+
 	/**
 	 * The size, in blocks, of the Entity (x, y)
 	 * @protected
@@ -89,7 +92,23 @@ var Entity = function(options) {
 			x: bitX,
 			y: bitY
 		}
-	}();
+	}(),
+
+	/**
+	 * The method to run when a collision is returned
+	 * @protected
+	 * @var {Function}
+	 */
+	collideMethod = function(entity) {
+		if (self.movement === 'x') {
+			
+			if ((!maxLimitX || (maxLimitX && maxLimitX < entity.x)) && entity.x === self.x + self.size('x') && (self.y === entity.y || self.y < entity.y + entity.size('y'))) {
+				maxLimitX = entity.x;
+			}
+		}
+
+		console.log(maxLimitX);
+	};
 
 	/**
 	 * Name of the entity 
@@ -146,6 +165,12 @@ var Entity = function(options) {
 	this.speed = options.speed || Config.defaultSpeed,
 
 	/**
+	 * Moveable
+	 * @var {Boolean}
+	 */
+	this.moveable = options.moveable || true,
+
+	/**
 	 * Lock movement on the X|Y axis
 	 * @var {String}
 	 */
@@ -159,6 +184,26 @@ var Entity = function(options) {
 	this.onRender = function(method) {
 		renderMethod = method;
 		return this;
+	},
+
+	/**
+	 * Checks if this Entity is colliding with another Entity
+	 * Should prevent the Entity from moving further
+	 * @param {Entity} entity
+	 * @param {Entity} checkEntity
+	 * @return {Boolean}
+	 */
+	this.checkCollision = function(checkEntity) {
+		if (!(checkEntity.x > this.x + this.size('x')
+			|| checkEntity.x + checkEntity.size('x') < this.x
+			|| checkEntity.y > this.y + this.size('y')
+			|| checkEntity.y + checkEntity.size('y') < this.y))
+		{
+			collideMethod(checkEntity);
+			return true;
+		}
+
+		return false;
 	},
 
 	/**
@@ -183,54 +228,56 @@ var Entity = function(options) {
 			entity,
 			e;
 
+		if (this.moveable) {
 
-		// @todo - This is bad because if we ever create a 1x1 Entity, they will only be able to move
-		// x|y but not both, might be useful for moving "powerups" around the map so the players can
-		// reach them by moving other pieces
-		if (selected && processing && (scheduledX !== false || scheduledY !== false)) {
-			
-			if (this.movement === 'x') {
+			// @todo - This is bad because if we ever create a 1x1 Entity, they will only be able to move
+			// x|y but not both, might be useful for moving "powerups" around the map so the players can
+			// reach them by moving other pieces
+			if (selected && processing && (scheduledX !== false || scheduledY !== false)) {
+				
+				if (this.movement === 'x') {
 
-				// Move forward  X
-				if (scheduledX > x + this.size('x')) {
-					this.x += this.speed * modifier;
-				}
-				// Move backward X
-				else if (scheduledX - Config.bitsize < x) {
-					this.x -= this.speed * modifier;
-				}
-				// Done moving
-				if (scheduledX - Config.bitsize == Math.ceil(x) || scheduledX - Config.bitsize == Math.floor(x)) {
-					this.x = scheduledX - Config.bitsize;
-					this.scheduledX = false;
-					//processing = false;
-				}
-				if (scheduledX == Math.ceil(x) + this.size('x') || scheduledX == Math.floor(x) + this.size('x')) {
-					this.x = scheduledX - this.size('x');
-					this.scheduledX = false;
-					//processing = false;
-				}
+					// Move forward  X
+					if (scheduledX > x + this.size('x') && (!maxLimitX || x + this.size('x') < maxLimitX)) {
+						this.x += this.speed * modifier;
+					}
+					// Move backward X
+					else if (scheduledX - Config.bitsize < x) {
+						this.x -= this.speed * modifier;
+					}
+					// Done moving
+					if (scheduledX - Config.bitsize == Math.ceil(x) || scheduledX - Config.bitsize == Math.floor(x)) {
+						this.x = scheduledX - Config.bitsize;
+						this.scheduledX = false;
+						//processing = false;
+					}
+					if (scheduledX == Math.ceil(x) + this.size('x') || scheduledX == Math.floor(x) + this.size('x')) {
+						this.x = scheduledX - this.size('x');
+						this.scheduledX = false;
+						//processing = false;
+					}
 
 
-			} else if (this.movement === 'y') {
-				// Move forward Y
-				if (scheduledY > y + this.size('y')) {
-					this.y += this.speed * modifier;
-				}
-				// Move backward Y
-				else if (scheduledY - Config.bitsize < y) {
-					this.y -= this.speed * modifier;
-				}
-				// Done moving
-				if (scheduledY - Config.bitsize == Math.ceil(y) || scheduledY - Config.bitsize == Math.floor(y)) {
-					this.y = scheduledY - Config.bitsize;
-					this.scheduledY = false;
-					//processing = false;
-				}
-				if (scheduledY == Math.ceil(y) + this.size('y') || scheduledY == Math.floor(y) + this.size('y')) {
-					this.y = scheduledY - this.size('y');
-					this.scheduledY = false;
-					//processing = false;
+				} else if (this.movement === 'y') {
+					// Move forward Y
+					if (scheduledY > y + this.size('y')) {
+						this.y += this.speed * modifier;
+					}
+					// Move backward Y
+					else if (scheduledY - Config.bitsize < y) {
+						this.y -= this.speed * modifier;
+					}
+					// Done moving
+					if (scheduledY - Config.bitsize == Math.ceil(y) || scheduledY - Config.bitsize == Math.floor(y)) {
+						this.y = scheduledY - Config.bitsize;
+						this.scheduledY = false;
+						//processing = false;
+					}
+					if (scheduledY == Math.ceil(y) + this.size('y') || scheduledY == Math.floor(y) + this.size('y')) {
+						this.y = scheduledY - this.size('y');
+						this.scheduledY = false;
+						//processing = false;
+					}
 				}
 			}
 		}
@@ -297,6 +344,9 @@ var Entity = function(options) {
 	 */
 	this.unselect = function() {
 		selected = false;
+		maxLimitX = false;
+		maxLimitY = false;
+
 		return this;
 	},
 
@@ -319,50 +369,18 @@ var Entity = function(options) {
 	},
 
 	/**
-	 * Checks if this Entity is colliding with another Entity
-	 * Should prevent the Entity from moving further
-	 * @param {Entity} entity
-	 * @param {Entity} checkEntity
-	 * @return {Boolean}
-	 */
-	this.checkCollision = function(x, y, w, h, checkX, checkY, checkW, checkH) {
-		if (!(checkX > x + w
-			|| checkX + checkW < x
-			|| checkY > y + h
-			|| checkY + checkH < y))
-		{
-			return true;
-		}
-
-		return false;
-	},
-
-	/**
 	 * Calculates and sets the new position
 	 * @param {Number} x
 	 * @param {Number} y
 	 * @return {Entity}
 	 */
-	this.scheduleMovement = function(x, y, entities) {
+	this.scheduleMovement = function(x, y) {
 		var scheduledX = Math.ceil(x/Config.bitsize) * Config.bitsize,
 			scheduledY = Math.ceil(y/Config.bitsize) * Config.bitsize,
 			entity,
 			e;
 		// If the Entity is selected, schedule the movement
 		if (selected && processing) {
-
-			// Only move forward/backward as far as we can allow based on the other
-			// entities on the level
-			for (e in entities) {
-				if (entities.hasOwnProperty(e) && entities[e].name !== this.name && entities[e].name !== 'background') {
-					entity = entities[e];
-
-					if (this.checkCollision(scheduledX, scheduledY, this.size('x'), this.size('y'), entity.x, entity.y, entity.size('x'), entity.size('y'))) {
-						console.log("Colliding with " + entity.name);
-					}
-				}
-			}
-
 			// Snap the x,y coordinates to the size of the grid
 			if (this.movement.toLowerCase() === 'x') {
 				this.scheduledX = scheduledX;

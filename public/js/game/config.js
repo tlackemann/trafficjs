@@ -15,7 +15,7 @@ var Config = {
 	/**
 	 * Enables debugging text output on the render() method
 	 */
-	debug: true,
+	debug: false,
 	debugFps: true,
 	debugObjects: true,
 	levels: []
