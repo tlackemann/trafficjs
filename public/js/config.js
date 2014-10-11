@@ -57,7 +57,7 @@ var Config = {
 					},
 					x: 1,
 					y: 4,
-					movement: 'x',
+					movement: 'y',
 					color: 'dodgerblue'
 				},
 				'truck-3': {
