@@ -197,6 +197,13 @@ var Traffic = function() {
 		}
 	},
 
+	/** 
+	 * Renders each individual block on the screen
+	 * Responsible for highlighting selected pieces
+	 * @protected
+	 * @param {Object} block
+	 * @return void
+	 */
 	_renderBlock = function(block) {
 		return function() {
 			if (block.isReady()) {
@@ -300,26 +307,18 @@ var Traffic = function() {
 												&& clickY >= entityMinY
 												&& clickY <= entityMaxY);
 
-							// Check to make sure we aren't going to intersect any 
-							for(c in entities) {
-								if (entities.hasOwnProperty(c) && selectedEntity.name !== entities[c].name && entities[c].name !== 'background') {
-									checkEntity = entities[c];
-									// Check the collisions between all entities (if anything intersects then stop it?)
-									collision = (!collision) ? self.checkCollision(entity, checkEntity) : false;
-								}
-							}
-
 							if (entityClicked) {
+								console.log("Selecting " + entity.name);
 								self.selectEntity(entity);
-							} else if (!collision) {
-								selectedEntity.scheduleMovement(clickX, clickY);
 							}
 						}
 					}
 				}
+
+				selectedEntity.scheduleMovement(clickX, clickY);
 			});
-		
-		// Loop through the entities and render
+	
+		// Loop through the entities and set the render methods
 		for (i in entities) {
 			if (entities.hasOwnProperty(i) && entities[i].name !== 'background') {
 				entities[i].onRender(_renderBlock(entities[i]));

@@ -6,7 +6,7 @@
  * @author		Thomas Lackemann <tommylackemann@gmail.com>
  * @copyright	Copyright (c) 2014, Thomas Lackemann
  */
- 
+
 /**
  * Entity object
  * 
@@ -55,7 +55,7 @@ var Entity = function(options) {
 	renderMethod = function() {},
 
 	/**
-	 * If we're processing then the Entity is moving
+	 * If we're ready for processing
 	 * @protected
 	 * @var {Boolean}
 	 */
@@ -318,18 +318,19 @@ var Entity = function(options) {
 	 * @return {Entity}
 	 */
 	this.scheduleMovement = function(x, y) {
-
 		// If the Entity is selected, schedule the movement
-		if (selected && !processing) {
+		if (selected && processing) {
 			// Snap the x,y coordinates to the size of the grid
 			if (this.movement.toLowerCase() === 'x') {
 				this.scheduledX = Math.ceil(x/Config.bitsize) * Config.bitsize;
+				console.log("Scheduled to move " + this.name + " to " + this.scheduledX);
 			} else if (this.movement.toLowerCase() === 'y') {
 				this.scheduledY = Math.ceil(y/Config.bitsize) * Config.bitsize;
-				// console.log("Scheduled to move to " + this.scheduledY);
+				console.log("Scheduled to move " + this.name + " to " + this.scheduledY);
 			}
+		} else if (!processing) {
 			// Now that we've told the Entity to move to a new location
-			// set processing to true so we know to move it
+			// set processing to true so we know we can move it
 			processing = true;
 		}
 		return this;
