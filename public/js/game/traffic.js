@@ -315,7 +315,25 @@ var Traffic = function() {
 					}
 				}
 
-				selectedEntity.scheduleMovement(clickX, clickY);
+				// Determine if we're in a valid state (col / row) to move this entity
+				entityMinX = selectedEntity.x,
+				entityMinY = selectedEntity.y,
+				entityMaxX = selectedEntity.size('x') + selectedEntity.x,
+				entityMaxY = selectedEntity.size('y') + selectedEntity.y,
+				entityClicked = false;
+
+				// Determine if we're clicking in the row or col
+				if (selectedEntity.movement === 'x') {
+					entityClicked = (clickY >= entityMinY
+									&& clickY <= entityMaxY);
+				} else if (selectedEntity.movement === 'y') {
+					entityClicked = (clickX >= entityMinX
+									&& clickX <= entityMaxX);
+				}
+
+				if (entityClicked) {
+					selectedEntity.scheduleMovement(clickX, clickY);
+				}
 			});
 	
 		// Loop through the entities and set the render methods
