@@ -8,8 +8,12 @@ module.exports = function(grunt) {
         banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
       },
       build: {
-        src: 'public/js/traffic.game.js',
-        dest: 'public/js/traffic.game.min.js'
+        src: [
+          'public/js/game/config.js',
+          'public/js/game/entity.js',
+          'public/js/game/traffic.js'
+        ],
+        dest: 'public/js/traffic.min.js'
       }
     }
   });
