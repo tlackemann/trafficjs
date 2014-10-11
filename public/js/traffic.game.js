@@ -7,18 +7,10 @@
  * @copyright	Copyright (c) 2014, Thomas Lackemann
  */
 
-(function() {
+(function(Config) {
 	"use strict";
 
 	var TrafficGame = null;
-	
-	var Config = {
-		id: "traffic-canvas",
-		bitsize: 48,
-		gridsize: 7,
-		framerate: 32,
-		defaultSpeed: 200
-	};
 
 	/**
 	 * Entity object
@@ -109,6 +101,12 @@
 		 * @var {String}
 		 */
 		this.name = options.name || '',
+
+		/**
+		 * Color of the block
+		 * @var {String}
+		 */
+		this.color = options.color || 'blue',
 
 		/**
 		 * X position
@@ -256,10 +254,10 @@
 
 		/**
 		 * Gets the Entity Image object
-		 * @return {Object}
+		 * @return {Object|Boolean}
 		 */
 		this.getImage = function() {
-			return image;
+			return (imageSrc) ? image : false;
 		},
 
 		/** 
@@ -347,6 +345,11 @@
 		 * @return {Entity}
 		 */
 		this.start = function() {
+			// Calculate the actual location of the block based on the x and y
+			this.x = this.x * Config.bitsize;
+			this.y = this.y * Config.bitsize;
+			console.log(this.x, this.y);
+
 			// Set the image src if there is one
 			if (imageSrc) {
 				image.src = imageSrc;
@@ -376,70 +379,77 @@
 		 * @protected
 		 * @var {Object}
 		 */
-		var self = this;
+		var self = this,
 
 		/**
 		 * List of available entities
 		 * @protected
 		 * @var {Object}
 		 */
-		var entities = {};
+		entities = {},
 
 		/**
 		 * Past loop time
 		 * @protected
 		 * @var {Date}
 		 */
-		var then = Date.now();
+		then = Date.now(),
 
 		/**
 		 * Current loop time
 		 * @protected
 		 * @var {Date}
 		 */
-		var now = Date.now();
+		now = Date.now(),
 
 		/**
 		 * Delta loop time
 		 * @protected
 		 * @var {Date}
 		 */
-		var delta = now - then;
+		delta = now - then,
 
 		/**
 		 * Active pressed keys
 		 * @protected
 		 * @var {Object}
 		 */
-		var keysDown = {};
+		keysDown = {},
 
 		/**
 		 * Current framenumber
 		 * @protected
 		 * @var {Number}
 		 */
-		var frameNumber = 0;
+		frameNumber = 0,
 
 		/**
 		 * Start time for frame rate
 		 * @protected
 		 * @var {Number}
 		 */
-		var startTime = 0;
+		startTime = 0,
 
 		/**
 		 * Current selected Entity
 		 * @protected
 		 * @var {Entity}
 		 */
-		var selectedEntity = null;
+		selectedEntity = null,
 
 		/**
 		 * Current Entity's turn
 		 * @protected
 		 * @var {Entity}
 		 */
-		var currentTurnEntity = null;
+		currentTurnEntity = null,
+
+		/**
+		 * Current level information
+		 * @protected 
+		 * @var {Object}
+		 */
+		level = false;
 
 		/**
 		 * Canvas element
@@ -478,6 +488,12 @@
 			}
 		},
 
+		/**
+		 * Calibrates the X position of a click relative to the game area
+		 * @protected
+		 * @param {Number} x
+		 * @return {Number}
+		 */
 		getOffsetX = function(x) {
 			var screenWidth = window.innerWidth,
 				centerPoint = screenWidth/2,
@@ -487,47 +503,97 @@
 			return x - offsetX;
 		},
 
+		/**
+		 * Calibrates the Y position of a click relative to the game area
+		 * @protected
+		 * @param {Number} y
+		 * @return {Number}
+		 */
 		getOffsetY = function(y) {
 			return y;
 		},
 
 		/**
+		 * Loads a level from the Config array (for now)
+		 * @protected
+		 * @return void
+		 */
+		_loadLevel = function() {
+			if (!level) {
+				if (!Config.levels.length) {
+					throw "No levels specified in the Configuration file";
+				}
+				// Load a random level
+				level = Config.levels[Math.floor((Math.random() * Config.levels.length))];
+			}
+		},
+
+		/**
 		 * Add the entities
 		 * @return void
-		 * @todo - Load from some sort of map layout
 		 */
 		_addEntities = function() {
+			var entity,
+				e;
+
 		 	// Background entity
 			self.addEntity('background', {
 				blocks: {x: Config.gridsize, y: Config.gridsize},
-				speed: 0
-			});
-			// Main player
-			self.addEntity('player-1', {
-				imageSrc: 'images/monster.png',
-				blocks: {x: 2, y: 1}
-			});
-			// Opponent
-			self.addEntity('player-2', {
-				blocks: {x: 2, y: 1}
-			});
-			// Truck 1
-			self.addEntity('truck-1', {
-				blocks: {x: 1, y: 3},
-				x: 2 * Config.bitsize,
-				y: 0,
-				movement: 'y'
+				speed: 0,
+				color: level.background
 			});
 
-			// Car 1
-			self.addEntity('car-1', {
-				blocks: {x: 1, y: 2},
-				x: 4 * Config.bitsize,
-				y: 0,
-				movement: 'y'
-			});
+			for (e in level.objects) {
+				if (level.objects.hasOwnProperty(e)) {
+					entity = level.objects[e];
+					self.addEntity(e, {
+						imageSrc: entity.imageSrc,
+						blocks: entity.blocks,
+						x: entity.x,
+						y: entity.y,
+						movement: entity.movement,
+						color: entity.color
+					})
+				}
+			}
+		},
 
-			// Sedan 1
+		_renderBlock = function(block) {
+			return function() {
+				if (block.isReady()) {
+					// The block itself
+					self.ctx.beginPath();
+					self.ctx.rect(block.x, block.y, block.size('x'), block.size('y'));
+					self.ctx.fillStyle = block.color;
+					self.ctx.fill();
+					// Render the glow and inner stroke
+					if (block.isSelected()) {
+						// ctx save/restore because global alpha will ruin our day
+						self.ctx.save();
+						self.ctx.beginPath();
+						self.ctx.rect(block.x, block.y, block.size('x'), block.size('y'));
+						self.ctx.fillStyle = 'white';
+						self.ctx.globalAlpha = 0.2;
+						self.ctx.fill();
+						self.ctx.restore();
+
+						// Now render the stroke
+						self.ctx.beginPath();
+						self.ctx.lineWidth = 2;
+						self.ctx.strokeStyle = 'black';
+						self.ctx.rect(block.x + 2, block.y + 2, block.size('x') - 4, block.size('y') - 4);
+						self.ctx.stroke();
+					}
+
+					if (Config.objectDebug) {
+						self.ctx.font = "12px Helvetica";
+						self.ctx.textAlign = "center";
+						self.ctx.textBaseline = "top";
+						self.ctx.fillStyle = 'black';
+						self.ctx.fillText(block.name, block.x + (block.size('x') / 2), block.y + (block.size('y') / 2));
+					}
+				}
+			}
 		},
 
 		/**
@@ -539,17 +605,21 @@
 		 	var background = self.entity('background'),
 		 		player = self.entity('player-1'),
 		 		player2 = self.entity('player-2'),
-		 		truck1 = self.entity('truck-1'),
-		 		car1 = self.entity('car-1');
+		 		configureEntity,
+		 		i;
 
 			// Set the background images draw method
 			background
 				.onRender(function() {
 					if (background.isReady()) {
-						self.ctx.beginPath();
-						self.ctx.rect(background.x, background.y, background.size('x'), background.size('y'));
-						self.ctx.fillStyle = 'grey';
-						self.ctx.fill();
+						if (background.getImage()) {
+							self.ctx.drawImage(background.getImage(), 0, 0);
+						} else {
+							self.ctx.beginPath();
+							self.ctx.rect(background.x, background.y, background.size('x'), background.size('y'));
+							self.ctx.fillStyle = background.color;
+							self.ctx.fill();
+						}
 					}
 				})
 				.addEvent('traffic.change.turn', function(event) {
@@ -611,51 +681,13 @@
 						}
 					}
 				});
-
-			// Set the players images draw method
-			player
-				.onRender(function() {
-					if (player.isReady()) {
-						self.ctx.beginPath();
-						self.ctx.rect(player.x, player.y, player.size('x'), player.size('y'));
-						self.ctx.fillStyle = (player.isSelected()) ? 'yellow' : 'red';
-						self.ctx.fill();
-						// self.ctx.drawImage(player.getImage(), player.x, player.y);
-					}
-				});
-
-			// Set the player2 images draw method
-			player2
-				.onRender(function() {
-					if (player2.isReady()) {
-						self.ctx.beginPath();
-						self.ctx.rect(player2.x, player2.y, player2.size('x'), player2.size('y'));
-						self.ctx.fillStyle = (player2.isSelected()) ? 'yellow' : 'blue';
-						self.ctx.fill();
-					}
-				});
-
-			// Set the truck images draw method
-			truck1
-				.onRender(function() {
-					if (truck1.isReady()) {
-						self.ctx.beginPath();
-						self.ctx.rect(truck1.x, truck1.y, truck1.size('x'), truck1.size('y'));
-						self.ctx.fillStyle = (truck1.isSelected()) ? 'yellow' : 'white';
-						self.ctx.fill();
-					}
-				});
-
-			// Set the truck images draw method
-			car1
-				.onRender(function() {
-					if (car1.isReady()) {
-						self.ctx.beginPath();
-						self.ctx.rect(car1.x, car1.y, car1.size('x'), car1.size('y'));
-						self.ctx.fillStyle = (car1.isSelected()) ? 'yellow' : 'purple';
-						self.ctx.fill();
-					}
-				});
+			
+			// Loop through the entities and render
+			for (i in entities) {
+				if (entities.hasOwnProperty(i) && entities[i].name !== 'background') {
+					entities[i].onRender(_renderBlock(entities[i]));
+				}
+			}
 		};
 
 		this.checkCollision = function(entity, checkEntity) {
@@ -698,7 +730,7 @@
 			if (entities[name]) {
 				return entities[name];
 			} else {
-				throw new Exception("Could not find Entity '" + name + "'");
+				throw "Could not find Entity '" + name + "'";
 			}
 		},
 
@@ -769,6 +801,7 @@
 			_addCanvas();
 
 			// Setup the entities
+			_loadLevel();
 			_addEntities();
 			_configureEntities();
 
@@ -791,18 +824,18 @@
 		 * @todo - Load from some sort of map layout
 		 */
 		this.reset = function() {
-			var player = this.entity('player-1'),
-				player2 = this.entity('player-2');
-
+			var player = this.entity('player-1');
+			// 	player2 = this.entity('player-2');
+// 
 			// Set the first player to the selected entity
 			this.setTurn(player);
 
-			// Render the player2 and player
-			player.x = 0;
-			player.y = Config.bitsize * 1;
+			// // Render the player2 and player
+			// player.x = 0;
+			// player.y = Config.bitsize * 1;
 
-			player2.x = (Config.bitsize * Config.gridsize) - player2.size('x');
-			player2.y = (Config.bitsize * Config.gridsize) - player2.size('y') - Config.bitsize;
+			// player2.x = (Config.bitsize * Config.gridsize) - player2.size('x');
+			// player2.y = (Config.bitsize * Config.gridsize) - player2.size('y') - Config.bitsize;
 		},
 
 		/**
@@ -817,24 +850,32 @@
 		/**
 		 * Renders the current game states
 		 * @return void
-		 * @todo - Load from some sort of map layout
 		 */
 		this.render = function() {
-			this.entity('background').render();
-			this.entity('player-1').render();
-			this.entity('player-2').render();
-			this.entity('truck-1').render();
-			this.entity('car-1').render();
+			var e;
 
-			// Score
-			this.ctx.fillStyle = "rgb(0,0,0)";
-			this.ctx.font = "12px Helvetica";
-			this.ctx.textAlign = "left";
-			this.ctx.textBaseline = "top";
-			//this.ctx.fillText("FPS: " + this.getFPS(), 32, 32);
-			this.ctx.fillText("Selected: " + selectedEntity.name, Config.bitsize / 4, Config.bitsize / 4);
-			this.ctx.fillText("Turn: " + currentTurnEntity.name, Config.bitsize / 4, Config.bitsize / 2);
-			this.ctx.fillText("FPS: " + this.getFPS(), Config.bitsize / 4, Config.bitsize - (Config.bitsize / 4));
+			// Render all the available entities
+			for (e in entities) {
+				if (entities.hasOwnProperty(e) && selectedEntity.name !== entities[e].name) {
+					entities[e].render();
+				}
+			}
+
+			// Ensure what we've selected is always on top
+			selectedEntity.render();
+
+			// Enable some debugging
+			if (Config.debug) {
+				this.ctx.fillStyle = "rgb(0,0,0)";
+				this.ctx.font = "12px Helvetica";
+				this.ctx.textAlign = "left";
+				this.ctx.textBaseline = "top";
+				//this.ctx.fillText("FPS: " + this.getFPS(), 32, 32);
+				this.ctx.fillText("Level: " + level.name, Config.bitsize / 4, Config.bitsize / 4);
+				this.ctx.fillText("Selected: " + selectedEntity.name, Config.bitsize / 4, Config.bitsize - (Config.bitsize / 4));
+				this.ctx.fillText("Turn: " + currentTurnEntity.name, Config.bitsize / 4, Config.bitsize / 2);
+				this.ctx.fillText("FPS: " + this.getFPS(), (Config.bitsize * Config.gridsize) - Config.bitsize, Config.bitsize / 4);
+			}
 		},
 
 		/**
@@ -874,4 +915,4 @@
 
 	TrafficGame = new Traffic();
 	TrafficGame.start();
-})();
+})(Config);
