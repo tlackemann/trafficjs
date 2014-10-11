@@ -14,7 +14,7 @@
 	
 	var Config = {
 		id: "traffic-canvas",
-		bitsize: 64,
+		bitsize: 48,
 		gridsize: 7,
 		framerate: 32,
 		defaultSpeed: 200
@@ -126,13 +126,13 @@
 		 * Scheduled X position
 		 * @var {Number}
 		 */
-		this.scheduledX = this.x,
+		this.scheduledX = false,
 
 		/**
 		 * Scheduled Y position
 		 * @var {Number}
 		 */
-		this.scheduledY = this.y,
+		this.scheduledY = false,
 
 		/**
 		 * Entity turn
@@ -201,7 +201,7 @@
 			// @todo - This is bad because if we ever create a 1x1 Entity, they will only be able to move
 			// x|y but not both, might be useful for moving "powerups" around the map so the players can
 			// reach them by moving other pieces
-			if (selected && processing) {
+			if (selected && processing && (scheduledX !== false || scheduledY !== false)) {
 				// Move forward  X
 				if (this.movement === 'x') {
 					if (scheduledX > x + this.size('x')) {
@@ -210,9 +210,15 @@
 					// Move backward X
 					else if (scheduledX - Config.bitsize < x) {
 						this.x -= this.speed * modifier;
-					} else {
-						processing = false;
 					}
+					// testing to lock the piece in place 
+					else {
+						console.log('here');
+						this.scheduledX = false;
+						processing = false;
+						document.getElementById(Config.id).dispatchEvent(new Event('traffic.change.turn'));
+					}
+
 				} else if (this.movement === 'y') {
 					// Move forward Y
 					if (scheduledY > y + this.size('y')) {
@@ -222,6 +228,8 @@
 					else if (scheduledY - Config.bitsize < y) {
 						this.y -= this.speed * modifier;
 					} else {
+						this.y = scheduledY;
+						this.scheduledY = false;
 						processing = false;
 					}
 				}
@@ -321,7 +329,6 @@
 		this.scheduleMovement = function(x, y) {
 			// If the Entity is selected, schedule the movement
 			if (selected) {
-
 				console.log("Clicked " + x);
 				console.log("Current fartest edge " + Math.floor((this.size('x') + this.x)));
 				console.log("Current nearest edge " + Math.floor(this.x));
@@ -332,6 +339,7 @@
 					console.log("Scheduled to move to " + this.scheduledX);
 				} else {
 					this.scheduledY = Math.ceil(y/Config.bitsize) * Config.bitsize;
+					console.log("Scheduled to move to " + this.scheduledY);
 				}
 				// Now that we've told the Entity to move to a new location
 				// set processing to true so we know to move it
@@ -418,7 +426,6 @@
 		 */
 		var frameNumber = 0;
 
-
 		/**
 		 * Start time for frame rate
 		 * @protected
@@ -458,8 +465,8 @@
 			self.canvas.width = Config.bitsize * Config.gridsize;
 			self.canvas.height = Config.bitsize * Config.gridsize;
 			self.canvas.id = Config.id;
-			document.body.appendChild(self.canvas);
-		};
+			document.getElementById('traffic-canvas-container').appendChild(self.canvas);
+		},
 
 		/**
 		 * Checks for entity collision during update()
@@ -467,9 +474,9 @@
 		 * @param {Number} modifier
 		 * @return void
 		 */
-		var _checkCollision = function(modifier) {
+		_checkCollision = function(modifier) {
 
-		};
+		},
 
 		/**
 		 * Checks for new entity positions and moves them on update()
@@ -477,7 +484,7 @@
 		 * @param {Number} modifier
 		 * @return void
 		 */
-		var _checkEntities = function(modifier) {
+		_checkEntities = function(modifier) {
 			var e, c,
 				entity,
 				checkEntity;
@@ -500,14 +507,27 @@
 					}
 				}
 			}
-		};
+		},
+
+		getOffsetX = function(x) {
+			var screenWidth = window.innerWidth,
+				centerPoint = screenWidth/2,
+				gameWidth = document.getElementById(Config.id).width,
+				offsetX = centerPoint - (gameWidth/2);
+
+			return x - offsetX;
+		},
+
+		getOffsetY = function(y) {
+			return y;
+		},
 
 		/**
 		 * Add the entities
 		 * @return void
 		 * @todo - Load from some sort of map layout
 		 */
-		var _addEntities = function() {
+		_addEntities = function() {
 		 	// Background entity
 			self.addEntity('background', {
 				blocks: {x: Config.gridsize, y: Config.gridsize},
@@ -515,6 +535,7 @@
 			});
 			// Main player
 			self.addEntity('player-1', {
+				imageSrc: 'images/monster.png',
 				blocks: {x: 2, y: 1}
 			});
 			// Opponent
@@ -530,20 +551,27 @@
 			});
 
 			// Car 1
+			self.addEntity('car-1', {
+				blocks: {x: 1, y: 2},
+				x: 3 * Config.bitsize,
+				y: 0,
+				movement: 'y'
+			});
 
 			// Sedan 1
-		 };
+		},
 
 		/**
 		 * Configure the entities listeners and draw methods
 		 * @return void
 		 * @todo - Load from some sort of map layout
 		 */
-		var _configureEntities = function() {
+		_configureEntities = function() {
 		 	var background = self.entity('background'),
 		 		player = self.entity('player-1'),
 		 		player2 = self.entity('player-2'),
-		 		truck1 = self.entity('truck-1');
+		 		truck1 = self.entity('truck-1'),
+		 		car1 = self.entity('car-1');
 
 			// Set the background images draw method
 			background
@@ -553,6 +581,13 @@
 						self.ctx.rect(background.x, background.y, background.size('x'), background.size('y'));
 						self.ctx.fillStyle = 'grey';
 						self.ctx.fill();
+					}
+				})
+				.addEvent('traffic.change.turn', function(event) {
+					if (player.turn) {
+						self.setTurn(player2);
+					} else if (player2.turn) {
+						self.setTurn(player);
 					}
 				});
 
@@ -564,19 +599,22 @@
 						self.ctx.rect(player.x, player.y, player.size('x'), player.size('y'));
 						self.ctx.fillStyle = (player.isSelected()) ? 'yellow' : 'red';
 						self.ctx.fill();
+						// self.ctx.drawImage(player.getImage(), player.x, player.y);
 					}
 				})
 				.addEvent('click', function(event) {
 					var minX = player.x,
 						minY = player.y,
 						maxX = player.size('x') + player.x,
-						maxY = player.size('y') + player.y;
+						maxY = player.size('y') + player.y,
+						clickX = getOffsetX(event.x),
+						clickY = getOffsetY(event.y);
 					// Check if we clicked this piece
-					if (player.canSelect(currentTurnEntity.name) && event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
+					if (player.canSelect(currentTurnEntity.name) && clickX >= minX && clickX <= maxX && clickY >= minY && clickY <= maxY) {
 						self.selectEntity(player);
 					} else {
 						// Move the selected Entity to the farthest path along the movement axis
-						player.scheduleMovement(event.x, event.y);
+						player.scheduleMovement(clickX, clickY);
 					}
 				});
 
@@ -594,14 +632,16 @@
 					var minX = player2.x,
 						minY = player2.y,
 						maxX = player2.size('x') + player2.x,
-						maxY = player2.size('y') + player2.y;
+						maxY = player2.size('y') + player2.y,
+						clickX = getOffsetX(event.x),
+						clickY = getOffsetY(event.y);
 
 					// Check if we clicked this piece
-					if (player2.canSelect(currentTurnEntity.name) && event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
+					if (player2.canSelect(currentTurnEntity.name) && clickX >= minX && clickX <= maxX && clickY >= minY && clickY <= maxY) {
 						self.selectEntity(player2);
 					} else {
 						// Move the selected Entity to the farthest path along the movement axis
-						player2.scheduleMovement(event.x, event.y);
+						player2.scheduleMovement(clickX, clickY);
 					}
 				});
 
@@ -619,14 +659,43 @@
 					var minX = truck1.x,
 						minY = truck1.y,
 						maxX = truck1.size('x') + truck1.x,
-						maxY = truck1.size('y') + truck1.y;
+						maxY = truck1.size('y') + truck1.y,
+						clickX = getOffsetX(event.x),
+						clickY = getOffsetY(event.y);
 
 					// Check if we clicked this piece
-					if (truck1.canSelect(currentTurnEntity.name) && event.x >= minX && event.x <= maxX && event.y >= minY && event.y <= maxY) {
+					if (truck1.canSelect(currentTurnEntity.name) && clickX >= minX && clickX <= maxX && clickY >= minY && clickY <= maxY) {
 						self.selectEntity(truck1);
 					} else {
 						// Move the selected Entity to the farthest path along the movement axis
-						truck1.scheduleMovement(event.x, event.y);
+						truck1.scheduleMovement(clickX, clickY);
+					}
+				});
+
+			// Set the truck images draw method
+			car1
+				.onRender(function() {
+					if (car1.isReady()) {
+						self.ctx.beginPath();
+						self.ctx.rect(car1.x, car1.y, car1.size('x'), car1.size('y'));
+						self.ctx.fillStyle = (car1.isSelected()) ? 'yellow' : 'purple';
+						self.ctx.fill();
+					}
+				})
+				.addEvent('click', function(event) {
+					var minX = car1.x,
+						minY = car1.y,
+						maxX = car1.size('x') + car1.x,
+						maxY = car1.size('y') + car1.y,
+						clickX = getOffsetX(event.x),
+						clickY = getOffsetY(event.y);
+
+					// Check if we clicked this piece
+					if (car1.canSelect(currentTurnEntity.name) && clickX >= minX && clickX <= maxX && clickY >= minY && clickY <= maxY) {
+						self.selectEntity(car1);
+					} else {
+						// Move the selected Entity to the farthest path along the movement axis
+						car1.scheduleMovement(clickX, clickY);
 					}
 				});
 		};
@@ -698,10 +767,16 @@
 			// Let all entities know who's allowed to move them
 			for(e in entities) {
 				if (entities.hasOwnProperty(e)) {
-					if (!(entity.name === 'player-1' && entities[e].name === 'player-2')) {
-						entities[e].allow = entity.name;
-					}
+					entities[e].allow = entity.name;
+					entities[e].turn = false;
 				}
+			}
+console.log(entities);
+			// Make sure that players cant access each other
+			if (entity.name === 'player-1') {
+				entities['player-2'].allow = false;
+			} else if (entity.name === 'player-2') {
+				entities['player-1'].allow = false;
 			}
 
 			// Set the selected entity
@@ -751,9 +826,6 @@
 			// Render the player2 and player
 			player.x = 0;
 			player.y = Config.bitsize * 1;
-			// To prevent default movement
-			player.scheduledX = 0;
-			player.scheduledY = Config.bitsize * 1;
 
 			player2.x = (Config.bitsize * Config.gridsize) - player2.size('x');
 			player2.y = (Config.bitsize * Config.gridsize) - player2.size('y') - Config.bitsize;
@@ -779,6 +851,7 @@
 			this.entity('player-1').render();
 			this.entity('player-2').render();
 			this.entity('truck-1').render();
+			this.entity('car-1').render();
 
 			// Score
 			this.ctx.fillStyle = "rgb(0,0,0)";

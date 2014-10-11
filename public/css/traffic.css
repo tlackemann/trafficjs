@@ -36,3 +36,8 @@ html, body {
 #traffic-footer a:hover {
 	color:#AE8984;
 }
+
+#traffic-canvas-container {
+	display:block;
+	text-align: center;
+}
