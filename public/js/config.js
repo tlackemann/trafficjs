@@ -2,13 +2,13 @@ var Config = {
 	id: "traffic-canvas",
 	bitsize: 64,
 	gridsize: 7,
-	framerate: 32,
 	defaultSpeed: 200,
 	/**
 	 * Enables debugging text output on the render() method
 	 */
 	debug: true,
-	objectDebug: true,
+	debugFps: true,
+	debugObjects: true,
 
 	// @todo - should load from a random map, maybe fetch from a server?
 	levels: [

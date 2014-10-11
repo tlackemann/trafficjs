@@ -348,7 +348,6 @@
 			// Calculate the actual location of the block based on the x and y
 			this.x = this.x * Config.bitsize;
 			this.y = this.y * Config.bitsize;
-			console.log(this.x, this.y);
 
 			// Set the image src if there is one
 			if (imageSrc) {
@@ -585,7 +584,7 @@
 						self.ctx.stroke();
 					}
 
-					if (Config.objectDebug) {
+					if (Config.debugObjects) {
 						self.ctx.font = "12px Helvetica";
 						self.ctx.textAlign = "center";
 						self.ctx.textBaseline = "top";
@@ -643,7 +642,7 @@
 						e,
 						c;
 
-					// Loop through all the entities and decide what to do
+					// Loop through all the entities and decide what to do when clicked
 					for(e in entities) {
 						if (entities.hasOwnProperty(e)) {
 							entity = entities[e];
@@ -667,8 +666,6 @@
 										checkEntity = entities[c];
 										// Check the collisions between all entities (if anything intersects then stop it?)
 										collision = (!collision) ? self.checkCollision(entity, checkEntity) : false;
-										console.log(collision);
-
 									}
 								}
 
@@ -799,10 +796,11 @@
 		this.start = function() {
 			// Add the canvas to the page
 			_addCanvas();
-
-			// Setup the entities
+			// Load a level
 			_loadLevel();
+			// Add entities from the level configuration
 			_addEntities();
+			// 
 			_configureEntities();
 
 			// Add event listeners
@@ -870,10 +868,15 @@
 				this.ctx.font = "12px Helvetica";
 				this.ctx.textAlign = "left";
 				this.ctx.textBaseline = "top";
-				//this.ctx.fillText("FPS: " + this.getFPS(), 32, 32);
 				this.ctx.fillText("Level: " + level.name, Config.bitsize / 4, Config.bitsize / 4);
 				this.ctx.fillText("Selected: " + selectedEntity.name, Config.bitsize / 4, Config.bitsize - (Config.bitsize / 4));
 				this.ctx.fillText("Turn: " + currentTurnEntity.name, Config.bitsize / 4, Config.bitsize / 2);
+			}
+			if (Config.debugFps) {
+				this.ctx.fillStyle = "rgb(0,0,0)";
+				this.ctx.font = "12px Helvetica";
+				this.ctx.textAlign = "left";
+				this.ctx.textBaseline = "top";
 				this.ctx.fillText("FPS: " + this.getFPS(), (Config.bitsize * Config.gridsize) - Config.bitsize, Config.bitsize / 4);
 			}
 		},
