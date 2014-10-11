@@ -116,14 +116,46 @@ var Traffic = function() {
 	},
 
 	/**
+	 * Checks if this Entity is colliding with another Entity
+	 * Should prevent the Entity from moving further
+	 * @param {Entity} entity
+	 * @param {Entity} checkEntity
+	 * @return {Boolean}
+	 */
+	_checkCollision = function(entity, checkEntity) {
+		if (!(checkEntity.x > entity.x + entity.size('x')
+			|| checkEntity.x + checkEntity.size('x') < entity.x
+			|| checkEntity.y > entity.y + entity.size('y')
+			|| checkEntity.y + checkEntity.size('y') < entity.y))
+		{
+			return true;
+		}
+
+		return false;
+	},
+
+	/**
 	 * Checks for new entity positions and moves them on update()
 	 * @protected
 	 * @param {Number} modifier
 	 * @return void
 	 */
 	_checkEntities = function(modifier) {
+		var collisions = {},
+			entity,
+			e;
+
 		if (selectedEntity) {
-			selectedEntity.move(modifier);
+			for (e in entities) {
+				if (entities.hasOwnProperty(e) && entities[e].name !== selectedEntity.name && entities[e].name !== 'background') {
+					entity = entities[e];
+					if (_checkCollision(selectedEntity, entity)) {
+						collisions[entity.name] = entity;
+					}
+				}
+			}
+			
+			selectedEntity.move(modifier, collisions);
 		}
 	},
 
@@ -343,20 +375,6 @@ var Traffic = function() {
 			}
 		}
 	};
-
-	this.checkCollision = function(entity, checkEntity) {
-
-		// Get this entities coordinates 
-		if (!(checkEntity.x > entity.x + entity.size('x')
-			|| checkEntity.x + checkEntity.size('x') < entity.x
-			|| checkEntity.y > entity.y + entity.size('y')
-			|| checkEntity.y + checkEntity.size('y') < entity.y))
-		{
-			return true;
-		}
-
-		return false;
-	}
 
 	/**
 	 * Adds and starts a new Entity

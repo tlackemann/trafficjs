@@ -170,37 +170,52 @@ var Entity = function(options) {
 	},
 
 	/**
-	 * Checks if this Entity is colliding with another Entity
-	 * Should prevent the Entity from moving further
-	 * @param {Entity} checkEntity
-	 * @return void
-	 */
-	this.checkCollision = function(checkEntity) {
-	},
-
-	/**
 	 * Determines if the Entity needs to be moved and adjusts accordingly
 	 * Accounts for the size of the grid so it snaps to the farthest edge
 	 * @param {Number} modifier
 	 * @return void
 	 */
-	this.move = function(modifier) {
+	this.move = function(modifier, collisions) {
 		var x = this.x,
 			y = this.y,
 			scheduledX = this.scheduledX,
-			scheduledY = this.scheduledY;
+			scheduledY = this.scheduledY,
+			stopMovementForward = false,
+			stopMovementBackward = false,
+			entity,
+			e;
+
+		for (e in collisions) {
+
+			entity = collisions[e];
+
+			// Move forward X
+			// if (entity.x == this.x + this.size('x')) {
+			// 	console.log("Colliding with " + entity.name);
+			// 	stopMovementForward = true;
+			// 	console.log("Cannot move forward");
+			// }
+		
+			if (entity.x + this.size('x') == this.x && (this.y == entity.y || (this.y <= entity.y && this.y >= entity.y + entity.size('y')))) {
+				console.log("Colliding with " + entity.name);
+				stopMovementBackward = true;
+				console.log("Cannot move backward");
+			}
+		}
 
 		// @todo - This is bad because if we ever create a 1x1 Entity, they will only be able to move
 		// x|y but not both, might be useful for moving "powerups" around the map so the players can
 		// reach them by moving other pieces
 		if (selected && processing && (scheduledX !== false || scheduledY !== false)) {
-			// Move forward  X
+			
 			if (this.movement === 'x') {
-				if (scheduledX > x + this.size('x')) {
+
+				// Move forward  X
+				if (scheduledX > x + this.size('x') && !stopMovementForward) {
 					this.x += this.speed * modifier;
 				}
 				// Move backward X
-				else if (scheduledX - Config.bitsize < x) {
+				else if (scheduledX - Config.bitsize < x && !stopMovementBackward) {
 					this.x -= this.speed * modifier;
 				}
 				// Done moving

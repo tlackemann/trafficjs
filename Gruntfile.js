@@ -16,11 +16,21 @@ module.exports = function(grunt) {
         ],
         dest: 'public/js/traffic.min.js'
       }
-    }
+    },
+    watch: {
+      scripts: {
+        files: ['public/js/game/*.js'],
+        tasks: ['default'],
+        options: {
+          spawn: false,
+        },
+      },
+    },
   });
 
   // Load the plugin that provides the "uglify" task.
   grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-contrib-watch');
 
   // Default task(s).
   grunt.registerTask('default', ['uglify']);

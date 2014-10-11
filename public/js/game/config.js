@@ -17,6 +17,6 @@ var Config = {
 	 */
 	debug: true,
 	debugFps: true,
-	debugObjects: true,
+	debugObjects: false,
 	levels: []
 };
