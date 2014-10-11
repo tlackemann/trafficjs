@@ -183,7 +183,6 @@
 		 * @return void
 		 */
 		this.checkCollision = function(checkEntity) {
-
 		},
 
 		/**
@@ -326,6 +325,7 @@
 		 * @return {Entity}
 		 */
 		this.scheduleMovement = function(x, y) {
+
 			// If the Entity is selected, schedule the movement
 			if (selected && !processing) {
 				// Snap the x,y coordinates to the size of the grid
@@ -453,6 +453,10 @@
 		 */
 		this.ctx = null;
 
+		/**
+		 * Setup the canvas and append to the DOM
+		 * @return void
+		 */
 		var _addCanvas = function() {
 			self.canvas = document.createElement("canvas");
 			self.ctx = self.canvas.getContext('2d');
@@ -463,43 +467,14 @@
 		},
 
 		/**
-		 * Checks for entity collision during update()
-		 * @protected
-		 * @param {Number} modifier
-		 * @return void
-		 */
-		_checkCollision = function(modifier) {
-
-		},
-
-		/**
 		 * Checks for new entity positions and moves them on update()
 		 * @protected
 		 * @param {Number} modifier
 		 * @return void
 		 */
 		_checkEntities = function(modifier) {
-			var e, c,
-				entity,
-				checkEntity;
-
-			// Check if any of our Entities have new coordinates to move to and move them
-			for(e in entities) {
-				if (entities.hasOwnProperty(e) && entities[e].name !== 'background') {
-					entity = entities[e];
-					// Check the collisions between all entities
-					for (c in entities) {
-						if (entities.hasOwnProperty(e)) {
-							checkEntity = entities[c];
-							if (checkEntity.name !== entity.name && checkEntity.name !== 'background') {
-								entity.checkCollision(checkEntity);
-							}
-						}
-					}
-					if (selectedEntity.name === entity.name) {
-						entity.move(modifier);
-					}
-				}
+			if (selectedEntity) {
+				selectedEntity.move(modifier);
 			}
 		},
 
@@ -547,7 +522,7 @@
 			// Car 1
 			self.addEntity('car-1', {
 				blocks: {x: 1, y: 2},
-				x: 3 * Config.bitsize,
+				x: 4 * Config.bitsize,
 				y: 0,
 				movement: 'y'
 			});
@@ -593,12 +568,16 @@
 						entityMaxX,
 						entityMaxY,
 						entity,
-						e;
+						checkEntity,
+						collision,
+						e,
+						c;
 
 					// Loop through all the entities and decide what to do
 					for(e in entities) {
 						if (entities.hasOwnProperty(e)) {
 							entity = entities[e];
+							collision = false;
 							// Don't try to move the background
 							if (entity.name !== 'background') {
 								// Get the entity coordinates vs where was clicked
@@ -612,9 +591,20 @@
 													&& clickY >= entityMinY
 													&& clickY <= entityMaxY);
 
+								// Check to make sure we aren't going to intersect any 
+								for(c in entities) {
+									if (entities.hasOwnProperty(c) && selectedEntity.name !== entities[c].name && entities[c].name !== 'background') {
+										checkEntity = entities[c];
+										// Check the collisions between all entities (if anything intersects then stop it?)
+										collision = (!collision) ? self.checkCollision(entity, checkEntity) : false;
+										console.log(collision);
+
+									}
+								}
+
 								if (entityClicked) {
 									self.selectEntity(entity);
-								} else {
+								} else if (!collision) {
 									selectedEntity.scheduleMovement(clickX, clickY);
 								}
 							}
@@ -667,6 +657,21 @@
 					}
 				});
 		};
+
+		this.checkCollision = function(entity, checkEntity) {
+
+			// Get this entities coordinates 
+			if (!(checkEntity.x > entity.x + entity.size('x')
+				|| checkEntity.x + checkEntity.size('x') < entity.x
+				|| checkEntity.y > entity.y + entity.size('y')
+				|| checkEntity.y + checkEntity.size('y') < entity.y))
+			{
+				console.log(entity.name + ' is colliding with ' + checkEntity.name);
+				return true;
+			}
+
+			return false;
+		}
 
 		/**
 		 * Adds and starts a new Entity
@@ -806,7 +811,6 @@
 		 * @return void
 		 */
 		this.update = function(modifier) {
-			_checkCollision(modifier);
 			_checkEntities(modifier);
 		},
 
