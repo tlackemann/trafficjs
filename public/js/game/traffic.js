@@ -116,25 +116,6 @@ var Traffic = function() {
 	},
 
 	/**
-	 * Checks if this Entity is colliding with another Entity
-	 * Should prevent the Entity from moving further
-	 * @param {Entity} entity
-	 * @param {Entity} checkEntity
-	 * @return {Boolean}
-	 */
-	_checkCollision = function(entity, checkEntity) {
-		if (!(checkEntity.x > entity.x + entity.size('x')
-			|| checkEntity.x + checkEntity.size('x') < entity.x
-			|| checkEntity.y > entity.y + entity.size('y')
-			|| checkEntity.y + checkEntity.size('y') < entity.y))
-		{
-			return true;
-		}
-
-		return false;
-	},
-
-	/**
 	 * Checks for new entity positions and moves them on update()
 	 * @protected
 	 * @param {Number} modifier
@@ -146,16 +127,7 @@ var Traffic = function() {
 			e;
 
 		if (selectedEntity) {
-			for (e in entities) {
-				if (entities.hasOwnProperty(e) && entities[e].name !== selectedEntity.name && entities[e].name !== 'background') {
-					entity = entities[e];
-					if (_checkCollision(selectedEntity, entity)) {
-						collisions[entity.name] = entity;
-					}
-				}
-			}
-			
-			selectedEntity.move(modifier, collisions);
+			selectedEntity.move(modifier);
 		}
 	},
 
@@ -364,7 +336,7 @@ var Traffic = function() {
 				}
 
 				if (entityClicked) {
-					selectedEntity.scheduleMovement(clickX, clickY);
+					selectedEntity.scheduleMovement(clickX, clickY, entities);
 				}
 			});
 	
