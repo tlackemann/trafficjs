@@ -466,17 +466,8 @@ var Traffic = function() {
 		_loadLevel();
 		// Add entities from the level configuration
 		_addEntities();
-		// 
+		// Add render methods
 		_configureEntities();
-
-		// Add event listeners
-		addEventListener("keydown", function (e) {
-			keysDown[e.keyCode] = true;
-		}, false);
-		addEventListener("keyup", function (e) {
-			delete keysDown[e.keyCode];
-		}, false);
-
 		// Run it!
 		this.reset();
 		this.main();
@@ -489,17 +480,7 @@ var Traffic = function() {
 	 */
 	this.reset = function() {
 		var player = this.entity('player-1');
-		// 	player2 = this.entity('player-2');
-// 
-		// Set the first player to the selected entity
 		this.setTurn(player);
-
-		// // Render the player2 and player
-		// player.x = 0;
-		// player.y = Config.bitsize * 1;
-
-		// player2.x = (Config.bitsize * Config.gridsize) - player2.size('x');
-		// player2.y = (Config.bitsize * Config.gridsize) - player2.size('y') - Config.bitsize;
 	},
 
 	/**

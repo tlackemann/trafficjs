@@ -70,6 +70,8 @@ var Entity = function(options) {
 
 	maxLimitX = false,
 	maxLimitY = false,
+	minLimitX = false,
+	minLimitY = false,
 
 	/**
 	 * The size, in blocks, of the Entity (x, y)
@@ -105,9 +107,12 @@ var Entity = function(options) {
 			if ((!maxLimitX || (maxLimitX && maxLimitX < entity.x)) && entity.x === self.x + self.size('x') && (self.y === entity.y || self.y < entity.y + entity.size('y'))) {
 				maxLimitX = entity.x;
 			}
+			if ((!minLimitX || (minLimitX && minLimitX > entity.x)) && entity.x + entity.size('x') === self.x && (self.y === entity.y || (self.y < entity.y + entity.size('y') && self.y + self.size('y') > entity.y))) {
+				minLimitX = self.x;
+			}
 		}
 
-		console.log(maxLimitX);
+		console.log(maxLimitX, minLimitX);
 	};
 
 	/**
@@ -242,18 +247,22 @@ var Entity = function(options) {
 						this.x += this.speed * modifier;
 					}
 					// Move backward X
-					else if (scheduledX - Config.bitsize < x) {
+					else if (scheduledX - Config.bitsize < x && (!minLimitX || x > minLimitX)) {
 						this.x -= this.speed * modifier;
 					}
 					// Done moving
 					if (scheduledX - Config.bitsize == Math.ceil(x) || scheduledX - Config.bitsize == Math.floor(x)) {
 						this.x = scheduledX - Config.bitsize;
 						this.scheduledX = false;
+						maxLimitX = false;
+						minLimitX = false;
 						//processing = false;
 					}
 					if (scheduledX == Math.ceil(x) + this.size('x') || scheduledX == Math.floor(x) + this.size('x')) {
 						this.x = scheduledX - this.size('x');
 						this.scheduledX = false;
+						maxLimitX = false;
+						minLimitX = false;
 						//processing = false;
 					}
 
@@ -346,6 +355,8 @@ var Entity = function(options) {
 		selected = false;
 		maxLimitX = false;
 		maxLimitY = false;
+		minLimitX = false;
+		minLimitY = false;
 
 		return this;
 	},

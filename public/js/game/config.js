@@ -16,7 +16,7 @@ var Config = {
 	 * Enables debugging text output on the render() method
 	 */
 	debug: false,
-	debugFps: true,
+	debugFps: false,
 	debugObjects: true,
 	levels: []
 };
