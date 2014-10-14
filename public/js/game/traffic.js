@@ -143,8 +143,7 @@ var Traffic = function() {
 	 * @return {Number}
 	 */
 	getOffsetX = function(x) {
-		var offsetX = document.getElementById(Config.id).offsetLeft;
-
+		var offsetX = $('#' + Config.container).offset().left; // jQuery required
 		return x - offsetX;
 	},
 
