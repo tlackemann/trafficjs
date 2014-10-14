@@ -103,16 +103,25 @@ var Entity = function(options) {
 	 */
 	collideMethod = function(entity) {
 		if (self.movement === 'x') {
-			
 			if ((!maxLimitX || (maxLimitX && maxLimitX < entity.x)) && entity.x === self.x + self.size('x') && (self.y === entity.y || self.y < entity.y + entity.size('y'))) {
 				maxLimitX = entity.x;
 			}
 			if ((!minLimitX || (minLimitX && minLimitX > entity.x)) && entity.x + entity.size('x') === self.x && (self.y === entity.y || (self.y < entity.y + entity.size('y') && self.y + self.size('y') > entity.y))) {
 				minLimitX = self.x;
 			}
+			// console.log(maxLimitX, minLimitX);
 		}
 
-		console.log(maxLimitX, minLimitX);
+		if (self.movement === 'y') {
+			if ((!maxLimitY || (maxLimitY && maxLimitY < entity.y)) && entity.y === self.y + self.size('y') && (self.x === entity.x || self.x < entity.x + entity.size('x'))) {
+				maxLimitY = entity.y;
+			}
+			if ((!minLimitY || (minLimitY && minLimitY > entity.y)) && entity.y + entity.size('y') === self.y && (self.x === entity.x || (self.x < entity.x + entity.size('x') && self.x + self.size('x') > entity.x))) {
+				minLimitY = self.y;
+			}
+			// console.log(maxLimitY, minLimitY);
+		}
+
 	};
 
 	/**
@@ -254,26 +263,22 @@ var Entity = function(options) {
 					if (scheduledX - Config.bitsize == Math.ceil(x) || scheduledX - Config.bitsize == Math.floor(x)) {
 						this.x = scheduledX - Config.bitsize;
 						this.scheduledX = false;
-						maxLimitX = false;
-						minLimitX = false;
 						//processing = false;
 					}
 					if (scheduledX == Math.ceil(x) + this.size('x') || scheduledX == Math.floor(x) + this.size('x')) {
 						this.x = scheduledX - this.size('x');
 						this.scheduledX = false;
-						maxLimitX = false;
-						minLimitX = false;
 						//processing = false;
 					}
 
 
 				} else if (this.movement === 'y') {
 					// Move forward Y
-					if (scheduledY > y + this.size('y')) {
+					if (scheduledY > y + this.size('y') && (!maxLimitY || y + this.size('y') < maxLimitY)) {
 						this.y += this.speed * modifier;
 					}
 					// Move backward Y
-					else if (scheduledY - Config.bitsize < y) {
+					else if (scheduledY - Config.bitsize < y && (!minLimitY || y > minLimitY)) {
 						this.y -= this.speed * modifier;
 					}
 					// Done moving
@@ -338,7 +343,6 @@ var Entity = function(options) {
 	 */
 	this.select = function () {
 		selected = true;
-
 		// Let the Entity know that we've just selected it to prevent movement
 		// on the initial click (something about when the event is fired and
 		// timing of the the update() method)
@@ -353,10 +357,13 @@ var Entity = function(options) {
 	 */
 	this.unselect = function() {
 		selected = false;
+		scheduledX = false;
+		scheduledY = false;
 		maxLimitX = false;
 		maxLimitY = false;
 		minLimitX = false;
 		minLimitY = false;
+		processing = false;
 
 		return this;
 	},

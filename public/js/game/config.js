@@ -8,15 +8,17 @@
  */
 
 var Config = {
+	container: 'traffic-demo',
 	id: "traffic-canvas",
+	//bitsize: window.innerHeight/7,
 	bitsize: 50,
 	gridsize: 7,
 	defaultSpeed: 200,
 	/**
 	 * Enables debugging text output on the render() method
 	 */
-	debug: false,
-	debugFps: false,
+	debug: true,
+	debugFps: true,
 	debugObjects: true,
 	levels: []
 };

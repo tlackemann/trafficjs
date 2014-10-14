@@ -8,10 +8,10 @@
 	};
 
 	// Header Directive
-	app.directive('trafficHeader', function() {
+	app.directive('trafficSidebar', function() {
 		return {
 			restrict: 'E',
-			templateUrl: 'templates/header.html'
+			templateUrl: 'templates/sidebar.html'
 		}
 	});
 

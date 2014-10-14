@@ -7,14 +7,17 @@
 </head>
 <body>
 	
-	<div id="traffic-loading"></div>
-	<div id="traffic" ng-controller="GameController as game">
-		<!-- Header -->
-		<traffic-header></traffic-header>
-		<traffic-start-game></traffic-start-game>
+	<div class="splash" ng-cloak="">
+	    <p>Loading</p>
+	</div>
 
-		<!-- List of games -->
-		<traffic-list></traffic-list>
+	<div id="traffic" ng-controller="GameController as game" ng-cloak="">
+		<div id="wrapper">
+	        <traffic-sidebar></traffic-sidebar>
+	        <!-- Page Content -->
+	        <traffic-game></traffic-game>
+
+	    </div>
 
 		<!-- Footer -->
 		<traffic-footer></traffic-footer>

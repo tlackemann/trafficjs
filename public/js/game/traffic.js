@@ -112,7 +112,7 @@ var Traffic = function() {
 		self.canvas.width = Config.bitsize * Config.gridsize;
 		self.canvas.height = Config.bitsize * Config.gridsize;
 		self.canvas.id = Config.id;
-		document.getElementById('traffic-canvas-container').appendChild(self.canvas);
+		document.getElementById(Config.container).appendChild(self.canvas);
 	},
 
 	/**
@@ -143,10 +143,7 @@ var Traffic = function() {
 	 * @return {Number}
 	 */
 	getOffsetX = function(x) {
-		var screenWidth = window.innerWidth,
-			centerPoint = screenWidth/2,
-			gameWidth = document.getElementById(Config.id).width,
-			offsetX = centerPoint - (gameWidth/2);
+		var offsetX = document.getElementById(Config.id).offsetLeft;
 
 		return x - offsetX;
 	},
@@ -158,7 +155,9 @@ var Traffic = function() {
 	 * @return {Number}
 	 */
 	getOffsetY = function(y) {
-		return y;
+		var offsetY = document.getElementById(Config.id).offsetTop;
+		console.log(y)
+		return y - offsetY;
 	},
 
 	/**
@@ -305,8 +304,8 @@ var Traffic = function() {
 				}
 			})
 			.addEvent('click', function(event) {
-				var clickX = getOffsetX(event.x),
-					clickY = getOffsetY(event.y),
+				var clickX = getOffsetX(event.pageX), // requires jQuery
+					clickY = getOffsetY(event.pageY), // requires jQuery
 					entityClicked,
 					entityMinX,
 					entityMinY,
@@ -317,6 +316,7 @@ var Traffic = function() {
 					e,
 					c;
 
+				console.log('Clicked ' + clickX + ',' + clickY);
 				// Loop through all the entities and decide what to do when clicked
 				for(e in entities) {
 					if (entities.hasOwnProperty(e)) {

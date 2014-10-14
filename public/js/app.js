@@ -23,6 +23,13 @@
 			console.log('start a game');
 		},
 
+		this.openSplash = function () {
+		    $splash.open({
+		      title: 'Hi there!',
+		      message: "This sure is a fine modal, isn't it?"
+		    });
+		},
+
 		this.changeUrl = function(url) {
 			return $location.url([url]);
 		}
