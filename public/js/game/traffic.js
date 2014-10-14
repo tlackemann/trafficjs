@@ -155,8 +155,7 @@ var Traffic = function() {
 	 * @return {Number}
 	 */
 	getOffsetY = function(y) {
-		var offsetY = document.getElementById(Config.id).offsetTop;
-		console.log(y)
+		var offsetY = $('#' + Config.container).offset().top; // jQuery required
 		return y - offsetY;
 	},
 
@@ -316,7 +315,6 @@ var Traffic = function() {
 					e,
 					c;
 
-				console.log('Clicked ' + clickX + ',' + clickY);
 				// Loop through all the entities and decide what to do when clicked
 				for(e in entities) {
 					if (entities.hasOwnProperty(e)) {
