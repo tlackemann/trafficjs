@@ -143,7 +143,7 @@ var Traffic = function() {
 	 * @return {Number}
 	 */
 	getOffsetX = function(x) {
-		var offsetX = $('#' + Config.container).offset().left; // jQuery required
+		var offsetX = $('#' + Config.id).offset().left; // jQuery required
 		return x - offsetX;
 	},
 
@@ -154,7 +154,7 @@ var Traffic = function() {
 	 * @return {Number}
 	 */
 	getOffsetY = function(y) {
-		var offsetY = $('#' + Config.container).offset().top; // jQuery required
+		var offsetY = $('#' + Config.id).offset().top; // jQuery required
 		return y - offsetY;
 	},
 
