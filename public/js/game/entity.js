@@ -103,20 +103,22 @@ var Entity = function(options) {
 	 */
 	collideMethod = function(entity) {
 		if (self.movement === 'x') {
-			if ((!maxLimitX || (maxLimitX && maxLimitX < entity.x)) && entity.x === self.x + self.size('x') && (self.y === entity.y || self.y < entity.y + entity.size('y'))) {
+			if ((!maxLimitX || (maxLimitX && maxLimitX < entity.x))
+				&& entity.x === self.x + self.width()
+				&& (self.y === entity.y || self.y < entity.y + entity.height())) {
 				maxLimitX = entity.x;
 			}
-			if ((!minLimitX || (minLimitX && minLimitX > entity.x)) && entity.x + entity.size('x') === self.x && (self.y === entity.y || (self.y < entity.y + entity.size('y') && self.y + self.size('y') > entity.y))) {
+			if ((!minLimitX || (minLimitX && minLimitX > entity.x)) && entity.x + entity.width() === self.x && (self.y === entity.y || (self.y < entity.y + entity.height() && self.y + self.height() > entity.y))) {
 				minLimitX = self.x;
 			}
 			// console.log(maxLimitX, minLimitX);
 		}
 
 		if (self.movement === 'y') {
-			if ((!maxLimitY || (maxLimitY && maxLimitY < entity.y)) && entity.y === self.y + self.size('y') && (self.x === entity.x || self.x < entity.x + entity.size('x'))) {
+			if ((!maxLimitY || (maxLimitY && maxLimitY < entity.y)) && entity.y === self.y + self.height() && (self.x === entity.x || self.x < entity.x + entity.width())) {
 				maxLimitY = entity.y;
 			}
-			if ((!minLimitY || (minLimitY && minLimitY > entity.y)) && entity.y + entity.size('y') === self.y && (self.x === entity.x || (self.x < entity.x + entity.size('x') && self.x + self.size('x') > entity.x))) {
+			if ((!minLimitY || (minLimitY && minLimitY > entity.y)) && entity.y + entity.height() === self.y && (self.x === entity.x || (self.x < entity.x + entity.width() && self.x + self.width() > entity.x))) {
 				minLimitY = self.y;
 			}
 			// console.log(maxLimitY, minLimitY);
@@ -208,11 +210,12 @@ var Entity = function(options) {
 	 * @return {Boolean}
 	 */
 	this.checkCollision = function(checkEntity) {
-		if (!(checkEntity.x > this.x + this.size('x')
-			|| checkEntity.x + checkEntity.size('x') < this.x
-			|| checkEntity.y > this.y + this.size('y')
-			|| checkEntity.y + checkEntity.size('y') < this.y))
+		if (!(checkEntity.x > this.x + this.width()
+			|| checkEntity.x + checkEntity.width() < this.x
+			|| checkEntity.y > this.y + this.height()
+			|| checkEntity.y + checkEntity.height() < this.y))
 		{
+			console.log(minLimitX, maxLimitX);
 			collideMethod(checkEntity);
 			return true;
 		}
@@ -252,7 +255,7 @@ var Entity = function(options) {
 				if (this.movement === 'x') {
 
 					// Move forward  X
-					if (scheduledX > x + this.size('x') && (!maxLimitX || x + this.size('x') < maxLimitX)) {
+					if (scheduledX > x + this.width() && (!maxLimitX || x + this.width() < maxLimitX)) {
 						this.x += this.speed * modifier;
 					}
 					// Move backward X
@@ -265,8 +268,8 @@ var Entity = function(options) {
 						this.scheduledX = false;
 						//processing = false;
 					}
-					if (scheduledX == Math.ceil(x) + this.size('x') || scheduledX == Math.floor(x) + this.size('x')) {
-						this.x = scheduledX - this.size('x');
+					if (scheduledX == Math.ceil(x) + this.width() || scheduledX == Math.floor(x) + this.width()) {
+						this.x = scheduledX - this.width();
 						this.scheduledX = false;
 						//processing = false;
 					}
@@ -274,7 +277,7 @@ var Entity = function(options) {
 
 				} else if (this.movement === 'y') {
 					// Move forward Y
-					if (scheduledY > y + this.size('y') && (!maxLimitY || y + this.size('y') < maxLimitY)) {
+					if (scheduledY > y + this.height() && (!maxLimitY || y + this.height() < maxLimitY)) {
 						this.y += this.speed * modifier;
 					}
 					// Move backward Y
@@ -287,8 +290,8 @@ var Entity = function(options) {
 						this.scheduledY = false;
 						//processing = false;
 					}
-					if (scheduledY == Math.ceil(y) + this.size('y') || scheduledY == Math.floor(y) + this.size('y')) {
-						this.y = scheduledY - this.size('y');
+					if (scheduledY == Math.ceil(y) + this.height() || scheduledY == Math.floor(y) + this.height()) {
+						this.y = scheduledY - this.height();
 						this.scheduledY = false;
 						//processing = false;
 					}
@@ -335,6 +338,22 @@ var Entity = function(options) {
 		} else {
 			return blocks;
 		}
+	},
+
+	/** 
+	 * Return the Entity height (in blocks)
+	 * @return {Number|Object}
+	 */
+	this.height = function() {
+		return this.size('y');
+	},
+
+	/** 
+	 * Return the Entity width (in blocks)
+	 * @return {Number|Object}
+	 */
+	this.width = function() {
+		return this.size('x');
 	},
 
 	/**

@@ -2,3 +2,6 @@
 node_modules
 npm-debug.log
 components
+# Ignore Capistrano for this project
+/config
+Capfile
