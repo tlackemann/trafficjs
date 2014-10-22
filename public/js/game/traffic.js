@@ -32,7 +32,7 @@ var Traffic = function() {
 	 * @protected
 	 * @var {Date}
 	 */
-	then = Date.now(),
+	last = Date.now(),
 
 	/**
 	 * Current loop time
@@ -46,7 +46,14 @@ var Traffic = function() {
 	 * @protected
 	 * @var {Date}
 	 */
-	delta = now - then,
+	delta = now - last,
+
+	/**
+	 * Step count
+	 * @protected
+	 * @var {Number}
+	 */
+	step = 1/60,
 
 	/**
 	 * Active pressed keys
@@ -542,18 +549,27 @@ var Traffic = function() {
 		return result;
 	},
 
+	this.timestamp = function() {
+		return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
+	},
+
 	/**
 	 * The main game loop
 	 * @return void
 	 */
 	this.main = function() {
-		now = Date.now();
-		delta = now - then;
-		self.update(delta / 1000);
-		self.render();
-		then = now;
-
-		// Request to do this again ASAP
+		now = this.timestamp();
+		// Ensure that the max timeout is 1 second
+		delta = Math.min(1, (now - last) / 1000);
+		// Fixed timestep loop
+		// @see http://gafferongames.com/game-physics/fix-your-timestep/
+		while (delta > step) {
+			delta = delta - step;
+			self.update(step);
+		}
+		self.render(delta);
+		last = now;
+		// Request to do this again
 		requestAnimationFrame(self.main);
 	};
 
